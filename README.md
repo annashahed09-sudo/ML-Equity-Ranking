@@ -8,43 +8,71 @@ The project prioritizes **sound problem formulation, statistical discipline, and
 
 ---
 
-## Motivation
+## What is implemented
 
-Financial returns are noisy, weakly predictable, and non-stationary. While absolute return prediction is unreliable, empirical finance suggests that **relative relationships across assets**—such as momentum, volatility, and trend effects—can be more stable and actionable.
-
-This project asks whether machine learning can capture such cross-sectional structure under realistic assumptions.
+- Modular data loading (`yfinance` and CSV)
+- Feature engineering for momentum, volatility, and trend-distance
+- Walk-forward time-series validation
+- Model layer with:
+  - Ridge baseline
+  - Gradient boosting regressor
+  - **Quantum-inspired regressor** using random Fourier feature mapping + ridge
+- **Accelerated computing abstraction**:
+  - NumPy backend by default
+  - Optional CuPy backend when CUDA is available
+- Evaluation metrics:
+  - Information Coefficient (IC)
+  - Long-short returns with turnover-aware transaction costs
+  - Portfolio performance summary
+- End-to-end walk-forward training pipeline in `src/pipeline.py`
+- Unit tests across all major modules
 
 ---
 
 ## Methodology
 
-* **Target**: Cross-sectional ranking of next-period equity returns
-* **Features**: Momentum, volatility, and trend-distance indicators
-* **Normalization**: Cross-sectional standardization at each time step
-* **Models**:
-
-  * Ridge regression as a linear baseline
-  * Gradient boosting to capture nonlinear effects
-
-Model complexity is deliberately constrained to emphasize robustness and interpretability.
+- **Target**: Cross-sectional ranking of next-period equity returns
+- **Features**: Momentum, volatility, and trend-distance indicators
+- **Normalization**: Cross-sectional standardization at each time step
+- **Validation**: Walk-forward folds only (no random CV)
+- **Portfolio rule**: Long top quantile, short bottom quantile per rebalance date
 
 ---
 
-## Validation and Evaluation
+## Quickstart
 
-Models are evaluated using **walk-forward validation** to respect the temporal structure of financial data. Randomized cross-validation is avoided.
+```bash
+pip install -r requirements.txt
+pytest tests/ -q
+python run_all.py
+```
 
-Key evaluation metrics include:
-
-* Information Coefficient (rank correlation)
-* Stability of predictive signal over time
-* Performance of simple long–short portfolios, before and after transaction costs
+`run_all.py` executes tests and then runs a synthetic-data demonstration of the full walk-forward pipeline with the quantum-inspired model.
 
 ---
 
-## Portfolio Construction
+## Programmatic usage
 
-At each rebalance, assets are ranked by model score. The top quantile is held long and the bottom quantile short, forming a simple, market-neutral portfolio directly tied to the model’s ranking output.
+```python
+from src.pipeline import run_walk_forward_pipeline
+from src.data_loader import load_yfinance_data
+
+raw = load_yfinance_data(
+    tickers=["AAPL", "MSFT", "NVDA", "AMZN"],
+    start_date="2019-01-01",
+    end_date="2024-01-01",
+)
+
+result = run_walk_forward_pipeline(
+    raw_df=raw,
+    model_type="quantum_inspired",
+    n_splits=5,
+    model_kwargs={"n_components": 256, "alpha": 0.5},
+)
+
+print(result.fold_metrics)
+print(result.portfolio_summary)
+```
 
 ---
 
@@ -52,15 +80,9 @@ At each rebalance, assets are ranked by model score. The top quantile is held lo
 
 This is a research and educational project:
 
-* Uses public historical data and simplified execution assumptions
-* Does not model intraday dynamics or microstructure
-* Results are not intended to represent deployable trading strategies
-
----
-
-## Purpose
-
-The goal of this project is to demonstrate a careful application of machine learning in a domain where signal is weak, assumptions matter, and validation is critical.
+- Uses public historical data and simplified execution assumptions
+- Does not model intraday dynamics or microstructure
+- Results are not intended to represent deployable trading strategies
 
 ---
 
