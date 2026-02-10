@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.pipeline import run_walk_forward_pipeline
+from src.pipeline import run_walk_forward_pipeline, run_model_suite
 
 
 def _synthetic_data(n_days=140, n_tickers=6):
@@ -34,10 +34,23 @@ def test_run_walk_forward_pipeline_quantum_inspired():
         n_splits=3,
         test_size=120,
         min_train_size=240,
-        model_kwargs={'n_components': 32, 'prefer_gpu': False},
+        model_kwargs={'n_components': 32, 'prefer_gpu': False, 'prefer_numba': False},
     )
 
     assert not result.predictions.empty
     assert set(['date', 'ticker', 'forward_return', 'model_score', 'fold_id']).issubset(result.predictions.columns)
     assert len(result.fold_metrics) > 0
     assert 'mean_net_return' in result.portfolio_summary
+
+
+def test_run_model_suite():
+    df = _synthetic_data()
+    board = run_model_suite(
+        raw_df=df,
+        model_types=['ridge', 'rf'],
+        n_splits=2,
+        test_size=120,
+        min_train_size=240,
+    )
+    assert len(board) == 2
+    assert set(['model', 'mean_ic', 'mean_net_return']).issubset(board.columns)

@@ -99,3 +99,35 @@ def run_walk_forward_pipeline(
         portfolio_returns=portfolio_returns,
         portfolio_summary=portfolio_summary,
     )
+
+
+
+def run_model_suite(
+    raw_df: pd.DataFrame,
+    model_types: List[str],
+    n_splits: int = 5,
+    test_size: Optional[int] = None,
+    min_train_size: Optional[int] = None,
+) -> pd.DataFrame:
+    """Benchmark multiple models and return fold-level aggregate metrics."""
+    rows = []
+    for model_type in model_types:
+        result = run_walk_forward_pipeline(
+            raw_df=raw_df,
+            model_type=model_type,
+            n_splits=n_splits,
+            test_size=test_size,
+            min_train_size=min_train_size,
+            model_kwargs={"prefer_gpu": True, "prefer_numba": True},
+        )
+        rows.append(
+            {
+                "model": model_type,
+                "mean_ic": float(result.fold_metrics["mean_ic"].mean()),
+                "std_ic": float(result.fold_metrics["mean_ic"].std()),
+                "mean_net_return": float(result.portfolio_summary["mean_net_return"]),
+                "sharpe_net": float(result.portfolio_summary["sharpe_net"]),
+                "mean_turnover": float(result.portfolio_summary["mean_turnover"]),
+            }
+        )
+    return pd.DataFrame(rows).sort_values("mean_ic", ascending=False).reset_index(drop=True)
