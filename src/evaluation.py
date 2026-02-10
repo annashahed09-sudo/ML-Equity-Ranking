@@ -33,8 +33,9 @@ def compute_ic_by_date(
     Compute IC for each date (cross-sectionally).
     Returns a Series indexed by date.
     """
-    return df.groupby('date').apply(
-        lambda g: information_coefficient(g[score_col], g[return_col])
+    grouped = df[["date", score_col, return_col]].groupby('date', group_keys=False)
+    return grouped.apply(
+        lambda g: information_coefficient(g[score_col], g[return_col]), include_groups=False
     )
 
 

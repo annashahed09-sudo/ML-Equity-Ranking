@@ -41,7 +41,7 @@ def compute_rolling_momentum(
     pd.Series
         Rolling momentum values
     """
-    return (df[column].pct_change(window)).fillna(method='bfill')
+    return df[column].pct_change(window).bfill()
 
 
 def compute_rolling_volatility(
