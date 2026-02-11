@@ -2,68 +2,107 @@
 
 ## Overview
 
-This project examines whether machine learning models can extract **useful cross-sectional signals** from equity market data to predict **relative next-period performance**. Rather than forecasting absolute returns, the focus is on ranking assets and evaluating whether those rankings translate into economically meaningful long–short portfolios.
+This project is now a **usable market-intelligence tool** with:
 
-The project prioritizes **sound problem formulation, statistical discipline, and realistic validation** over headline performance.
+- advanced cross-sectional ML ranking models,
+- quantum-inspired and accelerated computing paths,
+- NLP review analysis,
+- a deployable API,
+- and a polished interactive dashboard.
 
----
-
-## Motivation
-
-Financial returns are noisy, weakly predictable, and non-stationary. While absolute return prediction is unreliable, empirical finance suggests that **relative relationships across assets**—such as momentum, volatility, and trend effects—can be more stable and actionable.
-
-This project asks whether machine learning can capture such cross-sectional structure under realistic assumptions.
+It is designed for research and decision-support (not guaranteed market prediction).
 
 ---
 
-## Methodology
+## What’s included
 
-* **Target**: Cross-sectional ranking of next-period equity returns
-* **Features**: Momentum, volatility, and trend-distance indicators
-* **Normalization**: Cross-sectional standardization at each time step
-* **Models**:
+### Advanced ML
+- Ridge, Gradient Boosting, Random Forest, HistGradientBoosting, Neural MLP
+- Quantum-inspired model (RFF + Ridge)
+- Advanced stacked ensemble
 
-  * Ridge regression as a linear baseline
-  * Gradient boosting to capture nonlinear effects
+### Accelerated computing
+- NumPy default backend
+- Optional CuPy GPU backend
+- Numba JIT accelerated routines
+- Optional explicit CUDA kernel path for score normalization
 
-Model complexity is deliberately constrained to emphasize robustness and interpretability.
+### NLP + market intelligence
+- Financial sentiment analyzer (TF-IDF + Logistic Regression + lexicon fallback)
+- Review summarization and confidence scoring
+- Unified ticker report: rank, score, expected direction, review sentiment
 
----
-
-## Validation and Evaluation
-
-Models are evaluated using **walk-forward validation** to respect the temporal structure of financial data. Randomized cross-validation is avoided.
-
-Key evaluation metrics include:
-
-* Information Coefficient (rank correlation)
-* Stability of predictive signal over time
-* Performance of simple long–short portfolios, before and after transaction costs
-
----
-
-## Portfolio Construction
-
-At each rebalance, assets are ranked by model score. The top quantile is held long and the bottom quantile short, forming a simple, market-neutral portfolio directly tied to the model’s ranking output.
+### Product interfaces
+- **FastAPI service** (`src/serving.py`)
+- **Streamlit dashboard** (`dashboard.py`)
+- **CLI tool** (`src/cli.py`)
+- launch helper script (`launch.sh`)
 
 ---
 
-## Limitations
+## Install
 
-This is a research and educational project:
-
-* Uses public historical data and simplified execution assumptions
-* Does not model intraday dynamics or microstructure
-* Results are not intended to represent deployable trading strategies
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-## Purpose
+## Run tests
 
-The goal of this project is to demonstrate a careful application of machine learning in a domain where signal is weak, assumptions matter, and validation is critical.
+```bash
+pytest tests/ -q
+```
 
 ---
 
-## Disclaimer
+## Launch as a tool
 
-This project is for educational and research purposes only and does not constitute investment advice.
+### 1) Dashboard (interactive + aesthetics)
+
+```bash
+./launch.sh dashboard
+```
+
+Open: `http://localhost:8501`
+
+### 2) API service
+
+```bash
+./launch.sh api
+```
+
+Open: `http://localhost:8000/docs`
+
+### 3) CLI
+
+```bash
+python -m src.cli --tickers AAPL,MSFT,NVDA,AMZN --start 2021-01-01 --end 2024-12-31 --model advanced_ensemble
+```
+
+---
+
+## API quick example
+
+`POST /predict_from_tickers`
+
+```json
+{
+  "tickers": ["AAPL", "MSFT", "NVDA", "AMZN"],
+  "start_date": "2021-01-01",
+  "end_date": "2024-12-31",
+  "model_type": "advanced_ensemble",
+  "reviews_by_ticker": {
+    "AAPL": ["Strong growth and earnings beat."]
+  }
+}
+```
+
+---
+
+## Important legitimacy notes
+
+- This tool provides model-based rankings and sentiment context; it is **not financial advice**.
+- No system can predict markets with perfect accuracy.
+- Always apply risk controls, diversification, and independent validation.
+- Best use: research workflow, scenario analysis, and signal triage.

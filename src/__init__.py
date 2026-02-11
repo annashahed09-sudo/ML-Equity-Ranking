@@ -1,5 +1,3 @@
-"""
-ML-Equity-Ranking: Cross-sectional equity return prediction with machine learning.
-"""
+"""ML-Equity-Ranking: deployable cross-sectional equity intelligence toolkit."""
 
-__version__ = "0.1.0"
+__version__ = "0.4.0"
