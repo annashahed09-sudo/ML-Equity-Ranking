@@ -36,7 +36,7 @@ def test_advanced_models_predict_shape():
     models = [
         RandomForestModel(n_estimators=20, prefer_gpu=False, prefer_numba=False),
         HistGBModel(max_iter=50, prefer_gpu=False, prefer_numba=False),
-        NeuralMLPModel(hidden_layer_sizes=(8,), max_iter=1000, prefer_gpu=False, prefer_numba=False),
+        NeuralMLPModel(hidden_layer_sizes=(8,), max_iter=200, prefer_gpu=False, prefer_numba=False),
         AdvancedEnsembleModel(prefer_gpu=False, prefer_numba=False),
     ]
     for model in models:

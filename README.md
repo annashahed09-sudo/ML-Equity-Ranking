@@ -1,165 +1,323 @@
-# Cross-Sectional Equity Return Prediction with Machine Learning
-
-## Overview
-
-This project is now a **secured market-intelligence portal** for research-grade equity ranking and S&P 500 simulations. It combines:
-
-- advanced cross-sectional ML ranking models,
-- quantum-inspired and accelerated computing paths,
-- NLP review analysis,
-- a secured FastAPI service,
-- a password-protected Streamlit portal,
-- a CLI workflow for repeatable simulations.
-
-It produces **relative ranking signals and backtest diagnostics**. It is not financial advice and cannot guarantee market prediction accuracy.
+# Cross-Sectional Equity Ranking & Simulation System
+## Institutional Quant Research System Specification
 
 ---
 
-## What’s included
+## 1. System Overview
 
-### Advanced ML
-- Ridge, Gradient Boosting, Random Forest, HistGradientBoosting, Neural MLP
-- Quantum-inspired model (RFF + Ridge)
-- Advanced stacked ensemble
+This system is a modular **quantitative research and signal generation platform** designed for **cross-sectional equity ranking, portfolio simulation, and factor-driven analysis**.
 
-### S&P 500 simulation
-- Uses Yahoo Finance screener lists as the live large-cap simulation universe
-- Falls back to a stable built-in S&P 500 sample for offline/demo use
-- Downloads market data through `yfinance`
-- Runs walk-forward model training and long/short portfolio simulation
-- Returns latest ranking, fold metrics, and portfolio summary
+It supports:
 
-### Accelerated computing
-- NumPy default backend
-- Optional CuPy GPU backend
-- Optional Numba JIT accelerated routines
-- Optional explicit CUDA kernel path for score normalization
+- Cross-sectional return prediction (relative ranking, not absolute forecasting)
+- Multi-model ensemble signal generation
+- Walk-forward backtesting and validation
+- NLP-enhanced sentiment integration
+- Optional GPU-accelerated numerical execution
+- Research-grade simulation of long/short portfolios
 
-### NLP + market intelligence
-- Financial sentiment analyzer (TF-IDF + Logistic Regression + lexicon fallback)
-- Review summarization and confidence scoring
-- Unified ticker report: rank, score, expected direction, review sentiment
-- NYT and The Economist RSS evidence for market/geopolitics context
-- Downloadable PDF reports with rankings, reasoning, evidence links, and compliance notices
-
-### Product interfaces
-- **Secured FastAPI service** (`src/serving.py`)
-- **Password-protected Streamlit portal** (`dashboard.py`)
-- **CLI tool** (`src/cli.py`)
-- Launch helper script (`launch.sh`)
+The system is explicitly designed for **research and alpha signal exploration**, not execution or live trading.
 
 ---
 
-## Install
+## 2. System Objectives
 
-```bash
-pip install -r requirements.txt
+### Primary Objectives
+
+- Generate statistically robust **cross-sectional equity rankings**
+- Evaluate predictive signal quality using **time-series aware validation**
+- Support reproducible research pipelines for factor modeling
+- Enable modular experimentation across ML, NLP, and statistical models
+
+### Non-Objectives
+
+- Direct trade execution or brokerage integration
+- Guaranteed return prediction
+- Real-time low-latency trading systems
+- Regulatory-compliant advisory output
+
+---
+
+## 3. System Architecture
+
+### 3.1 High-Level Components
+
+```
+Data Layer → Feature Engineering → Model Layer → Signal Aggregation → Portfolio Simulation → Reporting Layer
 ```
 
 ---
 
-## Security configuration
+### 3.2 Core Modules
 
-Set these before running in any shared environment:
+#### (A) Data Ingestion Layer
 
-```bash
-export ML_EQUITY_API_TOKEN="replace-with-a-long-random-token"
-export ML_EQUITY_DASHBOARD_PASSWORD="replace-with-a-long-random-password"
-```
+Sources:
+- Yahoo Finance (`yfinance`)
+- Optional S&P 500 constituent universe (dynamic or fallback snapshot)
+- External news feeds (NYT, Economist RSS metadata only)
 
-If these are not set, the app uses a development fallback (`dev-change-me`) and the dashboard displays a warning.
-
----
-
-## Run tests
-
-```bash
-pytest tests/ -q
-```
+Responsibilities:
+- OHLCV retrieval
+- Universe construction
+- Data normalization and alignment
+- Missing data handling
 
 ---
 
-## Launch as a secured tool
+#### (B) Feature Engineering Layer
 
-### 1) Dashboard portal
+Feature categories:
 
-```bash
-./launch.sh dashboard
-```
+- Price-based features (returns, volatility, momentum)
+- Cross-sectional normalization (z-scores, ranks)
+- Rolling statistical features
+- Optional sentiment features from NLP pipeline
 
-Open: `http://localhost:8501`
-
-### 2) API service
-
-```bash
-./launch.sh api
-```
-
-Open: `http://localhost:8000/docs`
-
-Use the API token as a bearer token:
-
-```bash
-curl -H "Authorization: Bearer $ML_EQUITY_API_TOKEN" http://localhost:8000/health
-```
-
-### 3) CLI custom ticker ranking
-
-```bash
-python -m src.cli --tickers AAPL,MSFT,NVDA,AMZN --start 2021-01-01 --end 2024-12-31 --model advanced_ensemble
-```
-
-### 4) CLI S&P 500 simulation
-
-```bash
-python -m src.cli --sp500 --sp500-limit 25 --include-news --pdf-report sp500_report.pdf --start 2021-01-01 --end 2024-12-31 --model advanced_ensemble
-```
-
-For offline/demo mode:
-
-```bash
-python -m src.cli --sp500 --fallback-sp500 --sp500-limit 10 --start 2021-01-01 --end 2024-12-31 --model ridge
-```
+Output:
+- Model-ready feature tensor indexed by (time, asset)
 
 ---
 
-## API quick examples
+#### (C) Model Layer
 
-### `POST /sp500/simulate`
+Ensemble architecture:
 
-```json
-{
-  "start_date": "2021-01-01",
-  "end_date": "2024-12-31",
-  "model_type": "advanced_ensemble",
-  "limit": 25,
-  "n_splits": 3,
-  "use_yahoo_screener": true,
-  "include_news": true
-}
-```
+1. Linear Models
+   - Ridge regression (baseline factor model)
 
-### `POST /predict_from_tickers`
+2. Tree-Based Models
+   - Random Forest
+   - Gradient Boosting
+   - Histogram-based Gradient Boosting
 
-```json
-{
-  "tickers": ["AAPL", "MSFT", "NVDA", "AMZN"],
-  "start_date": "2021-01-01",
-  "end_date": "2024-12-31",
-  "model_type": "advanced_ensemble",
-  "reviews_by_ticker": {
-    "AAPL": ["Strong growth and earnings beat."]
-  }
-}
-```
+3. Neural Models
+   - Multi-layer perceptron regressor
+
+4. Kernel Approximation Models
+   - Random Fourier Features (RFF) + Ridge regression
+
+5. Ensemble Aggregation
+   - Stacked meta-model (`advanced_ensemble`)
+
+All models operate under **cross-sectional regression objective**:
+\[
+y_{i,t} = f(X_{i,t}) + \epsilon
+\]
+
+where target is relative return or forward-ranked performance.
 
 ---
 
-## Important legitimacy notes
+#### (D) Acceleration Layer
 
-- This tool provides model-based rankings, simulations, and sentiment context; it is **not financial advice**.
-- No system can predict markets with perfect accuracy.
-- Simulation results depend on data quality, model settings, date range, universe selection, and market regime.
-- Always apply risk controls, diversification, position sizing, and independent validation.
-- Best use: research workflow, scenario analysis, and signal triage.
-- News evidence is limited to source titles/summaries/links from NYT and The Economist RSS feeds; article text is not scraped or redistributed.
+Compute backends:
+
+- CPU: NumPy (baseline)
+- GPU (optional):
+  - CuPy for array operations
+  - CUDA-enabled acceleration (environment-dependent)
+- JIT:
+  - Numba for vectorized numerical routines
+
+Selection is runtime adaptive based on hardware availability.
+
+---
+
+#### (E) NLP & Sentiment Layer
+
+Submodules:
+
+- TF-IDF vectorization
+- Logistic regression sentiment classifier
+- Lexicon fallback sentiment scoring
+- Text summarization (lightweight extractive methods)
+
+Outputs:
+- Sentiment score per asset
+- Aggregated thematic signals
+- Augmented feature vectors for model layer
+
+Constraint:
+- No full-text proprietary data redistribution (metadata only)
+
+---
+
+#### (F) Signal Aggregation Layer
+
+Combines outputs from:
+
+- ML ranking models
+- Sentiment signals
+- Cross-model ensemble weighting
+
+Produces:
+- Cross-sectional score per asset per time step
+- Normalized rank ordering
+
+---
+
+#### (G) Portfolio Simulation Engine
+
+Backtesting methodology:
+
+- Walk-forward validation (strict temporal separation)
+- Long/short portfolio construction
+- Transaction cost modeling
+- Turnover constraints
+- Rebalancing simulation
+
+Metrics:
+
+- Information Coefficient (IC)
+- Rank correlation stability
+- Portfolio Sharpe (simulation-based)
+- Drawdown statistics
+- Turnover rates
+
+---
+
+#### (H) Reporting Layer
+
+Outputs:
+
+- Structured performance reports
+- Ranked asset lists
+- Model comparison summaries
+- Optional PDF export for research documentation
+
+---
+
+## 4. Interfaces
+
+### 4.1 API Service (FastAPI)
+
+Purpose:
+Programmatic access to ranking, simulation, and analytics.
+
+Endpoints:
+
+- `/sp500/simulate`
+- `/predict_from_tickers`
+- `/health`
+
+Authentication:
+- Bearer token required (`API_TOKEN`)
+
+---
+
+### 4.2 Research Dashboard (Streamlit)
+
+Purpose:
+Interactive exploration of rankings and simulation outputs.
+
+Characteristics:
+- Password-protected
+- Non-production interface
+- Intended for internal research use only
+
+---
+
+### 4.3 CLI Interface
+
+Supports:
+
+- batch ticker ranking
+- full universe simulation
+- offline/backtest execution
+- report generation
+
+Designed for reproducible research workflows.
+
+---
+
+## 5. Data Model
+
+### Primary Entity
+
+```
+Asset-Time Feature Tensor
+(index: time, asset)
+```
+
+Fields:
+
+- OHLCV features
+- engineered signals
+- sentiment scores (optional)
+- target variable (forward return or rank)
+
+---
+
+## 6. Security Model
+
+### 6.1 Authentication
+
+- API access controlled via bearer token
+- Dashboard protected via password gate
+
+---
+
+### 6.2 Deployment Assumptions
+
+This system assumes:
+
+- Controlled research environment OR private infrastructure deployment
+- HTTPS termination handled externally (reverse proxy recommended)
+- No unauthenticated public exposure without additional security layers
+
+---
+
+### 6.3 Secret Management
+
+Required environment variables:
+
+- `ML_EQUITY_API_TOKEN`
+- `ML_EQUITY_DASHBOARD_PASSWORD`
+
+Production behavior:
+- Missing secrets should result in **hard failure**
+- No insecure default credentials permitted in production mode
+
+---
+
+## 7. Performance Considerations
+
+- Vectorized computation preferred (NumPy / CuPy)
+- Avoid Python-level loops in feature computation
+- GPU acceleration optional and non-essential
+- Walk-forward backtesting is computationally dominant workload
+
+---
+
+## 8. Limitations
+
+- Model outputs are statistical estimations, not predictions
+- Non-stationarity of financial markets limits predictive stability
+- Performance is highly sensitive to:
+  - feature selection
+  - training window
+  - regime shifts
+- NLP signals are auxiliary and noisy
+
+---
+
+## 9. Extensibility
+
+System is designed to support:
+
+- Alternative asset classes (crypto, FX, commodities)
+- Alternative factor models (Fama-French extensions)
+- Reinforcement learning portfolio policies
+- Alternative data integration (news APIs, filings, macro signals)
+
+---
+
+## 10. Compliance Statement
+
+This system is intended solely for:
+- academic research
+- quantitative experimentation
+- simulation-based analysis
+
+It does not constitute financial advice, investment recommendations, or trading signals for execution.

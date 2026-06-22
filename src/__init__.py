@@ -1,3 +1,3 @@
-"""ML-Equity-Ranking: secured S&P 500 equity intelligence simulation toolkit."""
+"""ML-Equity-Ranking: advanced cross-sectional equity ranking toolkit."""
 
-__version__ = "0.5.0"
+__version__ = "0.3.0"

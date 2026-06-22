@@ -163,7 +163,6 @@ class NeuralMLPModel(CrossSectionalModel):
             hidden_layer_sizes=hidden_layer_sizes,
             alpha=alpha,
             max_iter=max_iter,
-            solver="lbfgs",
             random_state=42,
         )
 
