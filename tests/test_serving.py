@@ -5,7 +5,12 @@ import pytest
 fastapi = pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
+from src.security import DEFAULT_DEV_TOKEN
 from src.serving import app
+
+
+def _auth_headers():
+    return {'Authorization': f'Bearer {DEFAULT_DEV_TOKEN}'}
 
 
 def _rows(n_days=120, n_tickers=3):
@@ -37,6 +42,14 @@ def test_health():
     assert r.json()['status'] == 'ok'
 
 
+
+
+def test_predict_from_rows_requires_auth():
+    client = TestClient(app)
+    payload = {'rows': _rows(), 'model_type': 'ridge'}
+    r = client.post('/predict_from_rows', json=payload)
+    assert r.status_code == 401
+
 def test_predict_from_rows():
     client = TestClient(app)
     payload = {
@@ -44,7 +57,7 @@ def test_predict_from_rows():
         'model_type': 'ridge',
         'reviews_by_ticker': {'T00': ['Strong growth and bullish guidance.']},
     }
-    r = client.post('/predict_from_rows', json=payload)
+    r = client.post('/predict_from_rows', json=payload, headers=_auth_headers())
     assert r.status_code == 200
     body = r.json()
     assert 'ranking' in body and 'report' in body
@@ -54,6 +67,6 @@ def test_predict_from_rows():
 def test_predict_from_rows_invalid_model_type():
     client = TestClient(app)
     payload = {'rows': _rows(), 'model_type': 'not_a_model'}
-    r = client.post('/predict_from_rows', json=payload)
+    r = client.post('/predict_from_rows', json=payload, headers=_auth_headers())
     assert r.status_code == 400
     assert 'Unknown model_type' in r.json()['detail']

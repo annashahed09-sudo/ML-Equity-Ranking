@@ -1,15 +1,19 @@
-"""FastAPI service for interactive market intelligence usage."""
+"""FastAPI service for secured market intelligence usage."""
 
 from __future__ import annotations
 
 from typing import Dict, List, Optional
+
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from .features import compute_features, compute_forward_returns
 from .market_intelligence import MarketIntelligenceService
 from .models import create_model
+from .security import get_security_settings, token_is_valid
+from .sp500 import run_sp500_simulation
 
 
 class OhlcvRow(BaseModel):
@@ -29,15 +33,35 @@ class PredictRequest(BaseModel):
 
 
 class TickerRequest(BaseModel):
-    tickers: List[str] = Field(..., min_length=1)
+    tickers: List[str] = Field(..., min_length=2)
     start_date: str
     end_date: str
     model_type: str = "advanced_ensemble"
     reviews_by_ticker: Optional[Dict[str, List[str]]] = None
 
 
-app = FastAPI(title="ML Equity Intelligence API", version="1.0.1")
+class SP500SimulationRequest(BaseModel):
+    start_date: str
+    end_date: str
+    model_type: str = "advanced_ensemble"
+    limit: int = Field(25, ge=2, le=100)
+    n_splits: int = Field(3, ge=1, le=10)
+    test_size: Optional[int] = Field(None, ge=1)
+    min_train_size: Optional[int] = Field(None, ge=1)
+    use_live_wikipedia: bool = True
+    reviews_by_ticker: Optional[Dict[str, List[str]]] = None
+
+
+app = FastAPI(title="ML Equity Intelligence API", version="1.1.0")
 service = MarketIntelligenceService()
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def require_api_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)) -> None:
+    """Require a bearer token for non-health API routes."""
+    settings = get_security_settings()
+    if credentials is None or not token_is_valid(credentials.credentials, settings.api_token):
+        raise HTTPException(status_code=401, detail="Missing or invalid bearer token.")
 
 
 def _validate_model_type(model_type: str) -> None:
@@ -62,10 +86,14 @@ def _prepare_rows_df(rows: List[OhlcvRow]) -> pd.DataFrame:
 
 @app.get("/health")
 def health() -> Dict[str, str]:
-    return {"status": "ok"}
+    settings = get_security_settings()
+    return {
+        "status": "ok",
+        "auth": "default-dev-token" if settings.using_default_token else "configured",
+    }
 
 
-@app.post("/predict_from_rows")
+@app.post("/predict_from_rows", dependencies=[Depends(require_api_token)])
 def predict_from_rows(payload: PredictRequest) -> Dict:
     _validate_model_type(payload.model_type)
     df = _prepare_rows_df(payload.rows)
@@ -88,7 +116,7 @@ def predict_from_rows(payload: PredictRequest) -> Dict:
     }
 
 
-@app.post("/predict_from_tickers")
+@app.post("/predict_from_tickers", dependencies=[Depends(require_api_token)])
 def predict_from_tickers(payload: TickerRequest) -> Dict:
     _validate_model_type(payload.model_type)
     if len(set([t.strip().upper() for t in payload.tickers if t.strip()])) < 2:
@@ -110,3 +138,25 @@ def predict_from_tickers(payload: TickerRequest) -> Dict:
         "ranking": ranking.to_dict(orient="records"),
         "report": report.to_dict(orient="records"),
     }
+
+
+@app.post("/sp500/simulate", dependencies=[Depends(require_api_token)])
+def simulate_sp500(payload: SP500SimulationRequest) -> Dict:
+    """Run a secured S&P 500 ranking/backtest simulation."""
+    _validate_model_type(payload.model_type)
+    try:
+        result = run_sp500_simulation(
+            start_date=payload.start_date,
+            end_date=payload.end_date,
+            model_type=payload.model_type,
+            limit=payload.limit,
+            n_splits=payload.n_splits,
+            test_size=payload.test_size,
+            min_train_size=payload.min_train_size,
+            reviews_by_ticker=payload.reviews_by_ticker,
+            use_live_wikipedia=payload.use_live_wikipedia,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"S&P 500 simulation failed: {exc}") from exc
+
+    return result.to_dict()

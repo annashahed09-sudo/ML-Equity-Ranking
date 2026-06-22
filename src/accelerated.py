@@ -3,30 +3,34 @@ Advanced accelerated numeric utilities.
 
 This module offers:
 - Backend selection (NumPy/CuPy)
-- Numba JIT acceleration for CPU-heavy routines
+- Optional Numba JIT acceleration for CPU-heavy routines
 - Optional CUDA kernels (when numba.cuda is available)
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib import import_module, util
 from typing import Any, Tuple
+
 import numpy as np
 
-try:
-    from numba import njit
-except Exception:  # pragma: no cover - optional dependency fallback
-    def njit(*args, **kwargs):  # type: ignore
-        def wrapper(func):
-            return func
-        return wrapper
 
-try:
-    from numba import cuda
-    HAS_NUMBA_CUDA = True
-except Exception:  # pragma: no cover - optional dependency fallback
-    cuda = None
-    HAS_NUMBA_CUDA = False
+def _identity_njit(*args, **kwargs):
+    """Fallback decorator with the same call pattern as numba.njit."""
+    if args and callable(args[0]) and len(args) == 1 and not kwargs:
+        return args[0]
+
+    def wrapper(func):
+        return func
+
+    return wrapper
+
+
+_numba_module = import_module("numba") if util.find_spec("numba") else None
+njit = getattr(_numba_module, "njit", _identity_njit)
+cuda = getattr(_numba_module, "cuda", None)
+HAS_NUMBA_CUDA = cuda is not None
 
 
 @dataclass
@@ -44,14 +48,9 @@ class ArrayBackend:
 
 def get_array_backend(prefer_gpu: bool = True) -> ArrayBackend:
     """Resolve NumPy or CuPy backend."""
-    if prefer_gpu:
-        try:
-            import cupy as cp  # type: ignore
-
-            _ = cp.zeros(1)
-            return ArrayBackend(name="cupy", xp=cp)
-        except Exception:
-            pass
+    if prefer_gpu and util.find_spec("cupy"):
+        cupy_module = import_module("cupy")
+        return ArrayBackend(name="cupy", xp=cupy_module)
     return ArrayBackend(name="numpy", xp=np)
 
 
@@ -86,7 +85,7 @@ if HAS_NUMBA_CUDA:
 
 def cuda_available() -> bool:
     """Check whether Numba CUDA is available at runtime."""
-    return bool(HAS_NUMBA_CUDA and cuda is not None and cuda.is_available())
+    return bool(HAS_NUMBA_CUDA and cuda.is_available())
 
 
 def normalize_scores(scores: Any, prefer_gpu: bool = True, prefer_numba: bool = True) -> np.ndarray:
@@ -107,7 +106,7 @@ def normalize_scores(scores: Any, prefer_gpu: bool = True, prefer_numba: bool = 
         gpu_out = (gpu_arr - gpu_arr.mean()) / (gpu_arr.std() + 1e-8)
         return backend.asnumpy(gpu_out)
 
-    if prefer_numba and arr.ndim == 1 and arr.size > 0:
+    if prefer_numba and _numba_module is not None and arr.ndim == 1 and arr.size > 0:
         return _normalize_numba(arr)
 
     return (arr - arr.mean()) / (arr.std() + 1e-8)
