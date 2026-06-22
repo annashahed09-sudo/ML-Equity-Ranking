@@ -23,7 +23,7 @@ It produces **relative ranking signals and backtest diagnostics**. It is not fin
 - Advanced stacked ensemble
 
 ### S&P 500 simulation
-- Loads live S&P 500 constituents from Wikipedia when available
+- Uses Yahoo Finance screener lists as the live large-cap simulation universe
 - Falls back to a stable built-in S&P 500 sample for offline/demo use
 - Downloads market data through `yfinance`
 - Runs walk-forward model training and long/short portfolio simulation
@@ -39,6 +39,8 @@ It produces **relative ranking signals and backtest diagnostics**. It is not fin
 - Financial sentiment analyzer (TF-IDF + Logistic Regression + lexicon fallback)
 - Review summarization and confidence scoring
 - Unified ticker report: rank, score, expected direction, review sentiment
+- NYT and The Economist RSS evidence for market/geopolitics context
+- Downloadable PDF reports with rankings, reasoning, evidence links, and compliance notices
 
 ### Product interfaces
 - **Secured FastAPI service** (`src/serving.py`)
@@ -110,13 +112,13 @@ python -m src.cli --tickers AAPL,MSFT,NVDA,AMZN --start 2021-01-01 --end 2024-12
 ### 4) CLI S&P 500 simulation
 
 ```bash
-python -m src.cli --sp500 --sp500-limit 25 --start 2021-01-01 --end 2024-12-31 --model advanced_ensemble
+python -m src.cli --sp500 --sp500-limit 25 --include-news --pdf-report sp500_report.pdf --start 2021-01-01 --end 2024-12-31 --model advanced_ensemble
 ```
 
 For offline/demo mode:
 
 ```bash
-python -m src.cli --sp500 --offline-sp500 --sp500-limit 10 --start 2021-01-01 --end 2024-12-31 --model ridge
+python -m src.cli --sp500 --fallback-sp500 --sp500-limit 10 --start 2021-01-01 --end 2024-12-31 --model ridge
 ```
 
 ---
@@ -132,7 +134,8 @@ python -m src.cli --sp500 --offline-sp500 --sp500-limit 10 --start 2021-01-01 --
   "model_type": "advanced_ensemble",
   "limit": 25,
   "n_splits": 3,
-  "use_live_wikipedia": true
+  "use_yahoo_screener": true,
+  "include_news": true
 }
 ```
 
@@ -159,3 +162,4 @@ python -m src.cli --sp500 --offline-sp500 --sp500-limit 10 --start 2021-01-01 --
 - Simulation results depend on data quality, model settings, date range, universe selection, and market regime.
 - Always apply risk controls, diversification, position sizing, and independent validation.
 - Best use: research workflow, scenario analysis, and signal triage.
+- News evidence is limited to source titles/summaries/links from NYT and The Economist RSS feeds; article text is not scraped or redistributed.

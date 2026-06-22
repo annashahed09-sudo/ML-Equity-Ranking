@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from src.market_intelligence import MarketIntelligenceService
+from src.reporting import generate_pdf_report
 from src.security import get_security_settings, token_is_valid
 from src.sp500 import run_sp500_simulation
 
@@ -51,7 +55,8 @@ with st.sidebar:
         tickers_str = st.text_input("Tickers (comma-separated)", "AAPL,MSFT,NVDA,AMZN,META")
     else:
         sp500_limit = st.slider("S&P 500 universe size", 5, 100, 25, 5)
-        use_live_wikipedia = st.checkbox("Load live S&P 500 constituents", value=True)
+        use_yahoo_screener = st.checkbox("Use Yahoo Finance screener universe", value=True)
+        include_news = st.checkbox("Include NYT/Economist geopolitics evidence", value=True)
 
     run_btn = st.button("Run secured analysis", type="primary")
 
@@ -83,18 +88,21 @@ if run_btn:
                 report = service.build_market_report(ranking)
                 portfolio_summary = None
                 fold_metrics = None
+                current_simulation = None
             else:
                 simulation = run_sp500_simulation(
                     start_date=str(start_date),
                     end_date=str(end_date),
                     model_type=model_type,
                     limit=sp500_limit,
-                    use_live_wikipedia=use_live_wikipedia,
+                    use_yahoo_screener=use_yahoo_screener,
+                    include_news=include_news,
                 )
                 ranking = simulation.ranking
                 report = simulation.report
                 portfolio_summary = simulation.portfolio_summary
                 fold_metrics = simulation.fold_metrics
+                current_simulation = simulation
         except Exception as exc:
             st.error(f"Analysis failed: {exc}")
             st.stop()
@@ -131,6 +139,18 @@ if run_btn:
             st.dataframe(fold_metrics, use_container_width=True)
             st.subheader("Portfolio summary")
             st.json(portfolio_summary)
+            if current_simulation is not None:
+                report_path = Path(tempfile.gettempdir()) / "ml_equity_sp500_report.pdf"
+                generate_pdf_report(current_simulation, report_path, current_simulation.news_evidence or [])
+                st.download_button(
+                    "Download PDF report",
+                    data=report_path.read_bytes(),
+                    file_name="ml_equity_sp500_report.pdf",
+                    mime="application/pdf",
+                )
+                if current_simulation.evidence_narrative:
+                    st.subheader("News and geopolitics evidence")
+                    st.text(current_simulation.evidence_narrative)
         else:
             st.info("Backtest summary is available in S&P 500 simulation mode.")
 else:

@@ -13,7 +13,7 @@ from .features import compute_features, compute_forward_returns
 from .market_intelligence import MarketIntelligenceService
 from .models import create_model
 from .security import get_security_settings, token_is_valid
-from .sp500 import run_sp500_simulation
+from .sp500 import _json_records, run_sp500_simulation
 
 
 class OhlcvRow(BaseModel):
@@ -48,7 +48,8 @@ class SP500SimulationRequest(BaseModel):
     n_splits: int = Field(3, ge=1, le=10)
     test_size: Optional[int] = Field(None, ge=1)
     min_train_size: Optional[int] = Field(None, ge=1)
-    use_live_wikipedia: bool = True
+    use_yahoo_screener: bool = True
+    include_news: bool = True
     reviews_by_ticker: Optional[Dict[str, List[str]]] = None
 
 
@@ -111,8 +112,8 @@ def predict_from_rows(payload: PredictRequest) -> Dict:
     report = service.build_market_report(ranking, payload.reviews_by_ticker)
 
     return {
-        "ranking": ranking.to_dict(orient="records"),
-        "report": report.to_dict(orient="records"),
+        "ranking": _json_records(ranking),
+        "report": _json_records(report),
     }
 
 
@@ -135,8 +136,8 @@ def predict_from_tickers(payload: TickerRequest) -> Dict:
     report = service.build_market_report(ranking, payload.reviews_by_ticker)
 
     return {
-        "ranking": ranking.to_dict(orient="records"),
-        "report": report.to_dict(orient="records"),
+        "ranking": _json_records(ranking),
+        "report": _json_records(report),
     }
 
 
@@ -154,7 +155,8 @@ def simulate_sp500(payload: SP500SimulationRequest) -> Dict:
             test_size=payload.test_size,
             min_train_size=payload.min_train_size,
             reviews_by_ticker=payload.reviews_by_ticker,
-            use_live_wikipedia=payload.use_live_wikipedia,
+            use_yahoo_screener=payload.use_yahoo_screener,
+            include_news=payload.include_news,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"S&P 500 simulation failed: {exc}") from exc

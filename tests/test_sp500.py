@@ -30,7 +30,7 @@ def _prepared_data(n_days=140, n_tickers=6):
 
 
 def test_get_sp500_universe_offline_limit():
-    tickers = get_sp500_universe(limit=5, use_live_wikipedia=False)
+    tickers = get_sp500_universe(limit=5, use_yahoo_screener=False)
     assert len(tickers) == 5
     assert "AAPL" in tickers
 
