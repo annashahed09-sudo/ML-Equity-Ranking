@@ -3,7 +3,13 @@ import pandas as pd
 import pytest
 
 fastapi = pytest.importorskip("fastapi")
-from fastapi.testclient import TestClient
+try:
+    from fastapi.testclient import TestClient
+except Exception as exc:  # pragma: no cover - depends on optional httpx backend
+    pytest.skip(
+        f"fastapi TestClient unavailable ({exc}); install the 'dev' extra",
+        allow_module_level=True,
+    )
 
 from src.security import DEFAULT_DEV_TOKEN
 from src.serving import app
