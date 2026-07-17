@@ -11,14 +11,36 @@ import yfinance as yf
 from .data_loader import load_yfinance_data
 from .features import compute_features, compute_forward_returns
 from .market_intelligence import MarketIntelligenceService
-from .news import NewsEvidence, build_evidence_narrative, collect_market_news, filter_geopolitical_evidence
+from .news import (
+    NewsEvidence,
+    build_evidence_narrative,
+    collect_market_news,
+    filter_geopolitical_evidence,
+)
 from .pipeline import PipelineResult, run_walk_forward_pipeline
-
 
 # Stable fallback sample for offline tests/demos. Live symbols are loaded from Yahoo Finance screeners.
 FALLBACK_SP500_SAMPLE = [
-    "AAPL", "MSFT", "NVDA", "AMZN", "META", "GOOGL", "GOOG", "BRK-B", "LLY", "AVGO",
-    "JPM", "TSLA", "UNH", "XOM", "V", "MA", "PG", "COST", "HD", "MRK",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "META",
+    "GOOGL",
+    "GOOG",
+    "BRK-B",
+    "LLY",
+    "AVGO",
+    "JPM",
+    "TSLA",
+    "UNH",
+    "XOM",
+    "V",
+    "MA",
+    "PG",
+    "COST",
+    "HD",
+    "MRK",
 ]
 
 
@@ -149,7 +171,9 @@ def run_sp500_simulation(
 
     service = MarketIntelligenceService()
     report = service.build_market_report(ranking, reviews_by_ticker)
-    news_evidence = filter_geopolitical_evidence(collect_market_news(), limit=10) if include_news else []
+    news_evidence = (
+        filter_geopolitical_evidence(collect_market_news(), limit=10) if include_news else []
+    )
     evidence_narrative = build_evidence_narrative(news_evidence)
 
     return SP500SimulationResult(

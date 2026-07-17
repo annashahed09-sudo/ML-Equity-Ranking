@@ -58,7 +58,9 @@ service = MarketIntelligenceService()
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def require_api_token(credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme)) -> None:
+def require_api_token(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+) -> None:
     """Require a bearer token for non-health API routes."""
     settings = get_security_settings()
     if credentials is None or not token_is_valid(credentials.credentials, settings.api_token):
@@ -81,7 +83,9 @@ def _prepare_rows_df(rows: List[OhlcvRow]) -> pd.DataFrame:
 
     df = df.sort_values(["date", "ticker"]).reset_index(drop=True)
     if df["ticker"].nunique() < 2:
-        raise HTTPException(status_code=400, detail="Need at least 2 tickers for cross-sectional ranking.")
+        raise HTTPException(
+            status_code=400, detail="Need at least 2 tickers for cross-sectional ranking."
+        )
     return df
 
 
@@ -102,7 +106,9 @@ def predict_from_rows(payload: PredictRequest) -> Dict:
     feat = compute_features(df)
     feat = compute_forward_returns(feat).dropna().reset_index(drop=True)
     if feat.empty:
-        raise HTTPException(status_code=400, detail="Not enough rows after feature engineering. Increase history.")
+        raise HTTPException(
+            status_code=400, detail="Not enough rows after feature engineering. Increase history."
+        )
 
     ranking = service.rank_tickers(
         feat,

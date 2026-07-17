@@ -2,5 +2,5 @@ from src.cli import _parse_tickers
 
 
 def test_parse_tickers():
-    out = _parse_tickers('aapl, msft , nvda')
-    assert out == ['AAPL', 'MSFT', 'NVDA']
+    out = _parse_tickers("aapl, msft , nvda")
+    assert out == ["AAPL", "MSFT", "NVDA"]

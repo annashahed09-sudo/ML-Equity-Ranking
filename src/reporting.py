@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from textwrap import wrap
-from typing import Iterable, Optional
+from typing import Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -14,7 +15,9 @@ from .news import NewsEvidence, build_evidence_narrative
 from .sp500 import SP500SimulationResult
 
 
-def _write_lines(ax, lines: Iterable[str], y_start: float = 0.95, line_height: float = 0.04, fontsize: int = 10) -> None:
+def _write_lines(
+    ax, lines: Iterable[str], y_start: float = 0.95, line_height: float = 0.04, fontsize: int = 10
+) -> None:
     y = y_start
     for line in lines:
         for wrapped in wrap(str(line), width=105) or [""]:
@@ -36,7 +39,9 @@ def build_prediction_reasoning(result: SP500SimulationResult, max_tickers: int =
         "Top ranked tickers:",
     ]
     for _, row in result.ranking.head(max_tickers).iterrows():
-        lines.append(f"- Rank {int(row['rank'])}: {row['ticker']} with model_score={float(row['model_score']):.4f}")
+        lines.append(
+            f"- Rank {int(row['rank'])}: {row['ticker']} with model_score={float(row['model_score']):.4f}"
+        )
     return lines
 
 
@@ -82,7 +87,11 @@ def generate_pdf_report(
 
         fig, ax = plt.subplots(figsize=(11, 8.5))
         ax.axis("off")
-        _write_lines(ax, ["Privacy and regulatory notices:", "", *combined_disclaimer().splitlines()], fontsize=8)
+        _write_lines(
+            ax,
+            ["Privacy and regulatory notices:", "", *combined_disclaimer().splitlines()],
+            fontsize=8,
+        )
         pdf.savefig(fig, bbox_inches="tight")
         plt.close(fig)
 

@@ -1,19 +1,20 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from src.models import (
-    RidgeModel,
+    AdvancedEnsembleModel,
     GradientBoostingModel,
-    QuantumInspiredModel,
-    RandomForestModel,
     HistGBModel,
     NeuralMLPModel,
-    AdvancedEnsembleModel,
+    QuantumInspiredModel,
+    RandomForestModel,
+    RidgeModel,
     create_model,
 )
 
 
 def _sample_data(n=120, p=5):
-    X = pd.DataFrame(np.random.randn(n, p), columns=[f'f{i}' for i in range(p)])
+    X = pd.DataFrame(np.random.randn(n, p), columns=[f"f{i}" for i in range(p)])
     y = np.random.randn(n)
     return X, y
 
@@ -47,11 +48,11 @@ def test_advanced_models_predict_shape():
 
 def test_create_model_factory_aliases():
     aliases = [
-        ('qi', QuantumInspiredModel),
-        ('rf', RandomForestModel),
-        ('hgb', HistGBModel),
-        ('mlp', NeuralMLPModel),
-        ('ensemble', AdvancedEnsembleModel),
+        ("qi", QuantumInspiredModel),
+        ("rf", RandomForestModel),
+        ("hgb", HistGBModel),
+        ("mlp", NeuralMLPModel),
+        ("ensemble", AdvancedEnsembleModel),
     ]
     for alias, klass in aliases:
         model = create_model(alias, prefer_gpu=False, prefer_numba=False)

@@ -3,6 +3,41 @@
 
 ---
 
+## 0. Quickstart (localhost)
+
+Requires Python 3.9–3.11.
+
+```bash
+# 1. Create an environment and install runtime + dev dependencies
+python -m venv .venv && source .venv/bin/activate
+make setup                     # pip install -e ".[dev]" + pre-commit install
+#   (or, minimal:  pip install -r requirements.txt)
+
+# 2. Configure secrets (API token + dashboard password)
+cp .env.example .env           # then edit values; source it before launching services
+
+# 3. Run the test suite + linters
+make test                      # pytest with coverage
+make lint                      # ruff + isort + black checks
+
+# 4. Run an end-to-end demo on synthetic data
+make run                       # python run_all.py
+
+# 5. Run a real S&P 500 walk-forward backtest (bundled fallback universe, offline-safe)
+make backtest START=2022-01-01 END=2023-01-01 MODEL=advanced_ensemble
+make report                    # same, but also writes reports/simulation_report.pdf
+
+# 6. Launch the interfaces
+set -a && source .env && set +a
+make dashboard                 # Streamlit UI on http://localhost:8501
+make api                       # FastAPI service on http://localhost:8000  (GET /health)
+```
+
+Run `make help` to list all available commands. Configuration defaults live in
+`configs/config.yaml` and `configs/models.yaml`; local data/feature caches go in `data/`.
+
+---
+
 ## 1. System Overview
 
 This system is a modular **quantitative research and signal generation platform** designed for **cross-sectional equity ranking, portfolio simulation, and factor-driven analysis**.

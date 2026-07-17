@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable, List, Optional
+from typing import List, Optional
 from urllib.error import URLError
 from urllib.request import Request, urlopen
-import xml.etree.ElementTree as ET
 
 
 @dataclass(frozen=True)
@@ -29,8 +30,21 @@ DEFAULT_NEWS_FEEDS = {
 
 
 GEOPOLITICAL_KEYWORDS = {
-    "war", "sanction", "election", "inflation", "rate", "central bank", "oil", "trade",
-    "tariff", "china", "russia", "middle east", "supply chain", "recession", "growth",
+    "war",
+    "sanction",
+    "election",
+    "inflation",
+    "rate",
+    "central bank",
+    "oil",
+    "trade",
+    "tariff",
+    "china",
+    "russia",
+    "middle east",
+    "supply chain",
+    "recession",
+    "growth",
 }
 
 
@@ -83,7 +97,9 @@ def collect_market_news(
     return evidence
 
 
-def filter_geopolitical_evidence(evidence: Iterable[NewsEvidence], limit: int = 10) -> List[NewsEvidence]:
+def filter_geopolitical_evidence(
+    evidence: Iterable[NewsEvidence], limit: int = 10
+) -> List[NewsEvidence]:
     """Keep items whose title/summary indicate macro or geopolitical relevance."""
     selected: List[NewsEvidence] = []
     for item in evidence:

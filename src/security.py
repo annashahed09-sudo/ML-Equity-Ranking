@@ -6,7 +6,6 @@ import hmac
 import os
 from dataclasses import dataclass
 
-
 DEFAULT_DEV_TOKEN = "dev-change-me"
 
 

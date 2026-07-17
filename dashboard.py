@@ -22,7 +22,9 @@ st.title("📈 ML Equity Intelligence Portal")
 st.caption("Secured cross-sectional ranking, S&P 500 simulation, and review sentiment intelligence")
 
 if settings.using_default_dashboard_password:
-    st.warning("Using the default development password. Set ML_EQUITY_DASHBOARD_PASSWORD before deployment.")
+    st.warning(
+        "Using the default development password. Set ML_EQUITY_DASHBOARD_PASSWORD before deployment."
+    )
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -116,7 +118,9 @@ if run_btn:
     else:
         c4.metric("Workflow", "Ranking")
 
-    tab_rank, tab_charts, tab_backtest = st.tabs(["Ranking report", "Charts", "Backtest / simulation"])
+    tab_rank, tab_charts, tab_backtest = st.tabs(
+        ["Ranking report", "Charts", "Backtest / simulation"]
+    )
 
     with tab_rank:
         st.subheader("Latest ranking and market-intelligence report")
@@ -141,7 +145,9 @@ if run_btn:
             st.json(portfolio_summary)
             if current_simulation is not None:
                 report_path = Path(tempfile.gettempdir()) / "ml_equity_sp500_report.pdf"
-                generate_pdf_report(current_simulation, report_path, current_simulation.news_evidence or [])
+                generate_pdf_report(
+                    current_simulation, report_path, current_simulation.news_evidence or []
+                )
                 st.download_button(
                     "Download PDF report",
                     data=report_path.read_bytes(),

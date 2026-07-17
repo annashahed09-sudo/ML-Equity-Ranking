@@ -1,15 +1,25 @@
 from pathlib import Path
 
-from src.news import build_evidence_narrative, filter_geopolitical_evidence, NewsEvidence
+from src.news import NewsEvidence, build_evidence_narrative, filter_geopolitical_evidence
 from src.reporting import generate_pdf_report
-from tests.test_sp500 import _prepared_data
 from src.sp500 import run_sp500_simulation
+from tests.test_sp500 import _prepared_data
 
 
 def test_news_evidence_filter_and_narrative():
     evidence = [
-        NewsEvidence(source="New York Times Business", title="Central bank rate decision rattles markets", link="https://example.com/1", published="today"),
-        NewsEvidence(source="The Economist Latest", title="Culture notes", link="https://example.com/2", published="today"),
+        NewsEvidence(
+            source="New York Times Business",
+            title="Central bank rate decision rattles markets",
+            link="https://example.com/1",
+            published="today",
+        ),
+        NewsEvidence(
+            source="The Economist Latest",
+            title="Culture notes",
+            link="https://example.com/2",
+            published="today",
+        ),
     ]
     filtered = filter_geopolitical_evidence(evidence)
     assert len(filtered) == 1
@@ -29,7 +39,14 @@ def test_generate_pdf_report(tmp_path: Path):
         min_train_size=240,
         prepared_data=_prepared_data(),
     )
-    evidence = [NewsEvidence(source="The Economist Latest", title="Oil and trade risks rise", link="https://example.com/e", published="today")]
+    evidence = [
+        NewsEvidence(
+            source="The Economist Latest",
+            title="Oil and trade risks rise",
+            link="https://example.com/e",
+            published="today",
+        )
+    ]
     output = generate_pdf_report(result, tmp_path / "report.pdf", evidence)
     assert output.exists()
     assert output.stat().st_size > 0

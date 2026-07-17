@@ -11,16 +11,14 @@ Feature naming convention:
   - _trend: distance from trend
 """
 
-import pandas as pd
+from typing import List
+
 import numpy as np
-from typing import List, Optional
-from sklearn.preprocessing import StandardScaler
+import pandas as pd
 
 
 def compute_rolling_momentum(
-    df: pd.DataFrame,
-    window: int = 20,
-    column: str = 'close'
+    df: pd.DataFrame, window: int = 20, column: str = "close"
 ) -> pd.Series:
     """
     Compute rolling momentum (return) for each asset.
@@ -45,9 +43,7 @@ def compute_rolling_momentum(
 
 
 def compute_rolling_volatility(
-    df: pd.DataFrame,
-    window: int = 20,
-    column: str = 'close'
+    df: pd.DataFrame, window: int = 20, column: str = "close"
 ) -> pd.Series:
     """
     Compute rolling volatility (annualized standard deviation of returns).
@@ -71,11 +67,7 @@ def compute_rolling_volatility(
     return volatility
 
 
-def compute_trend_distance(
-    df: pd.DataFrame,
-    window: int = 60,
-    column: str = 'close'
-) -> pd.Series:
+def compute_trend_distance(df: pd.DataFrame, window: int = 60, column: str = "close") -> pd.Series:
     """
     Compute distance from trend (simple moving average).
 
@@ -100,9 +92,7 @@ def compute_trend_distance(
 
 
 def cross_sectional_standardize(
-    series: pd.Series,
-    group_key: str = None,
-    date_key: str = None
+    series: pd.Series, group_key: str = None, date_key: str = None
 ) -> pd.Series:
     """
     Standardize a feature cross-sectionally (per time step).
@@ -137,7 +127,7 @@ def compute_features(
     momentum_windows: List[int] = None,
     volatility_window: int = 20,
     trend_window: int = 60,
-    normalize: bool = True
+    normalize: bool = True,
 ) -> pd.DataFrame:
     """
     Compute all feature engineering for a full OHLCV dataset.
@@ -164,48 +154,48 @@ def compute_features(
     """
     if momentum_windows is None:
         momentum_windows = [5, 20]
-    
-    df = df.sort_values(['date', 'ticker']).reset_index(drop=True)
+
+    df = df.sort_values(["date", "ticker"]).reset_index(drop=True)
     result = df.copy()
-    
+
     # Compute features per asset
-    for ticker in df['ticker'].unique():
-        mask = df['ticker'] == ticker
+    for ticker in df["ticker"].unique():
+        mask = df["ticker"] == ticker
         asset_data = df[mask].copy()
-        
+
         # Momentum features
         for window in momentum_windows:
-            col_name = f'momentum_{window}_mom'
+            col_name = f"momentum_{window}_mom"
             result.loc[mask, col_name] = compute_rolling_momentum(asset_data, window=window).values
-        
+
         # Volatility feature
-        result.loc[mask, 'volatility_vol'] = compute_rolling_volatility(
+        result.loc[mask, "volatility_vol"] = compute_rolling_volatility(
             asset_data, window=volatility_window
         ).values
-        
+
         # Trend distance feature
-        result.loc[mask, 'trend_distance_trend'] = compute_trend_distance(
+        result.loc[mask, "trend_distance_trend"] = compute_trend_distance(
             asset_data, window=trend_window
         ).values
-    
+
     # Cross-sectional standardization
     if normalize:
-        feature_cols = [col for col in result.columns if any(
-            col.endswith(suffix) for suffix in ['_mom', '_vol', '_trend']
-        )]
-        
+        feature_cols = [
+            col
+            for col in result.columns
+            if any(col.endswith(suffix) for suffix in ["_mom", "_vol", "_trend"])
+        ]
+
         for col in feature_cols:
-            result[col] = result.groupby('date')[col].transform(
+            result[col] = result.groupby("date")[col].transform(
                 lambda x: (x - x.mean()) / (x.std() + 1e-8)
             )
-    
+
     return result
 
 
 def compute_forward_returns(
-    df: pd.DataFrame,
-    forward_periods: int = 1,
-    column: str = 'close'
+    df: pd.DataFrame, forward_periods: int = 1, column: str = "close"
 ) -> pd.DataFrame:
     """
     Compute next-period log returns for ranking (target variable).
@@ -227,15 +217,20 @@ def compute_forward_returns(
         Original data with 'forward_return' column added
     """
     result = df.copy()
-    result['forward_return'] = result.groupby('ticker')[column].apply(
+    # Use groupby.transform (not apply().values): transform aligns results to the
+    # original row index, whereas apply().values returns them in group (ticker) order
+    # and would silently assign each row the WRONG ticker's forward return.
+    result["forward_return"] = result.groupby("ticker")[column].transform(
         lambda x: np.log(x.shift(-forward_periods) / x)
-    ).values
-    
+    )
+
     return result
 
 
 def get_feature_columns(df: pd.DataFrame) -> List[str]:
     """Get list of all feature columns (end with _mom, _vol, _trend)."""
-    return [col for col in df.columns if any(
-        col.endswith(suffix) for suffix in ['_mom', '_vol', '_trend']
-    )]
+    return [
+        col
+        for col in df.columns
+        if any(col.endswith(suffix) for suffix in ["_mom", "_vol", "_trend"])
+    ]

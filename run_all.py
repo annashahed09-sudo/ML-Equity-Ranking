@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import os
+
 import numpy as np
 import pandas as pd
 
-from src.pipeline import run_walk_forward_pipeline, run_model_suite
 from src.market_intelligence import MarketIntelligenceService
+from src.pipeline import run_model_suite, run_walk_forward_pipeline
 
 
 def _make_synthetic_market_data(n_days: int = 220, tickers: int = 10) -> pd.DataFrame:
@@ -67,8 +68,14 @@ if __name__ == "__main__":
     print(model_board)
 
     service = MarketIntelligenceService()
-    latest_ranking = result.predictions.sort_values(["date", "model_score"], ascending=[False, False]).groupby("ticker").head(1)
-    latest_ranking = latest_ranking.sort_values("model_score", ascending=False).reset_index(drop=True)
+    latest_ranking = (
+        result.predictions.sort_values(["date", "model_score"], ascending=[False, False])
+        .groupby("ticker")
+        .head(1)
+    )
+    latest_ranking = latest_ranking.sort_values("model_score", ascending=False).reset_index(
+        drop=True
+    )
     latest_ranking["rank"] = latest_ranking.index + 1
 
     synthetic_reviews = {
@@ -77,7 +84,9 @@ if __name__ == "__main__":
             "Analysts remain bullish with upside revisions.",
         ]
     }
-    report = service.build_market_report(latest_ranking[["ticker", "rank", "model_score"]], synthetic_reviews)
+    report = service.build_market_report(
+        latest_ranking[["ticker", "rank", "model_score"]], synthetic_reviews
+    )
     print("\n=== Market review report ===")
     print(report.head())
 

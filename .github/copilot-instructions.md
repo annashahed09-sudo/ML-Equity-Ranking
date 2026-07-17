@@ -110,4 +110,3 @@ Key constraints: **Sound problem formulation, statistical discipline, and realis
 - **src/evaluation.py** (when built): IC and portfolio return calculations
 
 ---
-

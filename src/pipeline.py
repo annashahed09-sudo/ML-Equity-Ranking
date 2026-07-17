@@ -8,11 +8,11 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from .evaluation import compute_ic_by_date
 from .features import compute_features, compute_forward_returns, get_feature_columns
 from .models import create_model
-from .validation import create_walk_forward_splits, get_fold_data
-from .evaluation import compute_ic_by_date
 from .portfolio import run_portfolio_backtest
+from .validation import create_walk_forward_splits, get_fold_data
 
 
 @dataclass
@@ -37,12 +37,21 @@ def run_walk_forward_pipeline(
     test_size: Optional[int] = None,
     min_train_size: Optional[int] = None,
     model_kwargs: Optional[Dict] = None,
+    already_prepared: bool = False,
 ) -> PipelineResult:
-    """Run full walk-forward model training/evaluation pipeline."""
+    """Run full walk-forward model training/evaluation pipeline.
+
+    Set ``already_prepared=True`` when ``raw_df`` already contains engineered
+    feature columns and a ``forward_return`` target (e.g. produced upstream by
+    :func:`prepare_sp500_dataset`); this skips recomputing features/targets.
+    """
     if model_kwargs is None:
         model_kwargs = {}
 
-    df = _prepare_dataset(raw_df)
+    if already_prepared:
+        df = raw_df.dropna().sort_values(["date", "ticker"]).reset_index(drop=True)
+    else:
+        df = _prepare_dataset(raw_df)
     feature_cols = get_feature_columns(df)
     if not feature_cols:
         raise ValueError("No feature columns found. Feature engineering failed.")
@@ -73,7 +82,9 @@ def run_walk_forward_pipeline(
         fold_pred["model_score"] = scores
         fold_pred["fold_id"] = fold.fold_id
 
-        fold_ic = compute_ic_by_date(fold_pred, score_col="model_score", return_col="forward_return")
+        fold_ic = compute_ic_by_date(
+            fold_pred, score_col="model_score", return_col="forward_return"
+        )
 
         fold_metrics.append(
             {
@@ -99,7 +110,6 @@ def run_walk_forward_pipeline(
         portfolio_returns=portfolio_returns,
         portfolio_summary=portfolio_summary,
     )
-
 
 
 def run_model_suite(

@@ -18,7 +18,12 @@ def test_financial_sentiment_lexicon_and_summary():
 
 def test_financial_sentiment_trainable_classifier():
     analyzer = FinancialSentimentAnalyzer()
-    texts = ["strong growth and beat", "weak miss and decline", "bullish upside", "lawsuit risk and loss"]
+    texts = [
+        "strong growth and beat",
+        "weak miss and decline",
+        "bullish upside",
+        "lawsuit risk and loss",
+    ]
     labels = [1, 0, 1, 0]
     analyzer.fit(texts, labels)
     scores = analyzer.predict_scores(["strong upside", "weak decline"])

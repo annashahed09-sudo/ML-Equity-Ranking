@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Dict, List, Optional
+
 import pandas as pd
 
 from .data_loader import load_yfinance_data
