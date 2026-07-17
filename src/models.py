@@ -1,19 +1,20 @@
 """Model wrappers for cross-sectional equity prediction."""
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
-from typing import Optional
-from sklearn.linear_model import Ridge
 from sklearn.ensemble import (
     GradientBoostingRegressor,
-    RandomForestRegressor,
     HistGradientBoostingRegressor,
+    RandomForestRegressor,
     StackingRegressor,
 )
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_approximation import RBFSampler
+from sklearn.linear_model import Ridge
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from .accelerated import normalize_scores
 
@@ -56,7 +57,9 @@ class RidgeModel(CrossSectionalModel):
 
 
 class GradientBoostingModel(CrossSectionalModel):
-    def __init__(self, n_estimators: int = 150, max_depth: int = 3, learning_rate: float = 0.05, **kwargs):
+    def __init__(
+        self, n_estimators: int = 150, max_depth: int = 3, learning_rate: float = 0.05, **kwargs
+    ):
         super().__init__(name="GradientBoosting", **kwargs)
         self.model = GradientBoostingRegressor(
             n_estimators=n_estimators,
@@ -83,16 +86,30 @@ class GradientBoostingModel(CrossSectionalModel):
     def get_feature_importance(self) -> Optional[pd.Series]:
         if not self.is_fitted or self.feature_names is None:
             return None
-        return pd.Series(self.model.feature_importances_, index=self.feature_names).sort_values(ascending=False)
+        return pd.Series(self.model.feature_importances_, index=self.feature_names).sort_values(
+            ascending=False
+        )
 
 
 class QuantumInspiredModel(CrossSectionalModel):
-    def __init__(self, n_components: int = 512, gamma: float = 1.0, alpha: float = 0.5, random_state: int = 42, **kwargs):
+    def __init__(
+        self,
+        n_components: int = 512,
+        gamma: float = 1.0,
+        alpha: float = 0.5,
+        random_state: int = 42,
+        **kwargs,
+    ):
         super().__init__(name="QuantumInspired", **kwargs)
-        self.model = Pipeline([
-            ("rff", RBFSampler(gamma=gamma, n_components=n_components, random_state=random_state)),
-            ("ridge", Ridge(alpha=alpha, fit_intercept=True)),
-        ])
+        self.model = Pipeline(
+            [
+                (
+                    "rff",
+                    RBFSampler(gamma=gamma, n_components=n_components, random_state=random_state),
+                ),
+                ("ridge", Ridge(alpha=alpha, fit_intercept=True)),
+            ]
+        )
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:
         X_scaled = self.feature_scaler.fit_transform(X)
@@ -134,7 +151,9 @@ class RandomForestModel(CrossSectionalModel):
 
 
 class HistGBModel(CrossSectionalModel):
-    def __init__(self, max_depth: int = 6, learning_rate: float = 0.04, max_iter: int = 250, **kwargs):
+    def __init__(
+        self, max_depth: int = 6, learning_rate: float = 0.04, max_iter: int = 250, **kwargs
+    ):
         super().__init__(name="HistGB", **kwargs)
         self.model = HistGradientBoostingRegressor(
             max_depth=max_depth,
@@ -157,7 +176,9 @@ class HistGBModel(CrossSectionalModel):
 
 
 class NeuralMLPModel(CrossSectionalModel):
-    def __init__(self, hidden_layer_sizes=(64, 32), alpha: float = 1e-3, max_iter: int = 500, **kwargs):
+    def __init__(
+        self, hidden_layer_sizes=(64, 32), alpha: float = 1e-3, max_iter: int = 500, **kwargs
+    ):
         super().__init__(name="NeuralMLP", **kwargs)
         self.model = MLPRegressor(
             hidden_layer_sizes=hidden_layer_sizes,
@@ -187,8 +208,18 @@ class AdvancedEnsembleModel(CrossSectionalModel):
         self.model = StackingRegressor(
             estimators=[
                 ("ridge", Ridge(alpha=0.5)),
-                ("rf", RandomForestRegressor(n_estimators=120, max_depth=6, random_state=42, n_jobs=-1)),
-                ("hgb", HistGradientBoostingRegressor(max_iter=150, learning_rate=0.05, random_state=42)),
+                (
+                    "rf",
+                    RandomForestRegressor(
+                        n_estimators=120, max_depth=6, random_state=42, n_jobs=-1
+                    ),
+                ),
+                (
+                    "hgb",
+                    HistGradientBoostingRegressor(
+                        max_iter=150, learning_rate=0.05, random_state=42
+                    ),
+                ),
             ],
             final_estimator=Ridge(alpha=0.5),
             passthrough=True,

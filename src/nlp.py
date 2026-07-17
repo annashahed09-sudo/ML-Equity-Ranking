@@ -2,20 +2,35 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Dict
 import re
+from dataclasses import dataclass
+from typing import Dict, List
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-
 POSITIVE_WORDS = {
-    "growth", "beat", "strong", "bullish", "upside", "improve", "record", "profit", "outperform"
+    "growth",
+    "beat",
+    "strong",
+    "bullish",
+    "upside",
+    "improve",
+    "record",
+    "profit",
+    "outperform",
 }
 NEGATIVE_WORDS = {
-    "miss", "weak", "bearish", "downgrade", "risk", "loss", "decline", "lawsuit", "underperform"
+    "miss",
+    "weak",
+    "bearish",
+    "downgrade",
+    "risk",
+    "loss",
+    "decline",
+    "lawsuit",
+    "underperform",
 }
 
 

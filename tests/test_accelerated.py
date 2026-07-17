@@ -1,11 +1,11 @@
 import numpy as np
 
 from src.accelerated import (
+    cuda_available,
     get_array_backend,
+    log_returns_numba,
     normalize_scores,
     normalize_scores_cuda,
-    cuda_available,
-    log_returns_numba,
 )
 
 

@@ -76,6 +76,7 @@ def _normalize_numba(arr: np.ndarray) -> np.ndarray:
 
 
 if HAS_NUMBA_CUDA:
+
     @cuda.jit
     def _normalize_cuda_kernel(inp, mean, std, out):
         i = cuda.grid(1)
