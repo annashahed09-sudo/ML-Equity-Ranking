@@ -213,3 +213,8 @@ __marimo__/
 /data/cache/*
 !/data/cache/.gitkeep
 /reports/
+
+# Session scratch artifacts (not part of the project)
+test-plan.md
+test-report.md
+test-report-assets/

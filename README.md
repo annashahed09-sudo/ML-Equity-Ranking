@@ -13,8 +13,9 @@ python -m venv .venv && source .venv/bin/activate
 make setup                     # pip install -e ".[dev]" + pre-commit install
 #   (or, minimal:  pip install -r requirements.txt)
 
-# 2. Configure secrets (API token + dashboard password)
-cp .env.example .env           # then edit values; source it before launching services
+# 2. Configure LOCAL access secrets (no paid API keys are ever required)
+make secrets                   # generates strong random values into .env (gitignored)
+#   (or manually:  cp .env.example .env  and edit the two values)
 
 # 3. Run the test suite + linters
 make test                      # pytest with coverage
@@ -27,11 +28,17 @@ make run                       # python run_all.py
 make backtest START=2022-01-01 END=2023-01-01 MODEL=advanced_ensemble
 make report                    # same, but also writes reports/simulation_report.pdf
 
-# 6. Launch the interfaces
-set -a && source .env && set +a
+# 6. Launch the interfaces (bind to 127.0.0.1 only; .env is auto-loaded)
 make dashboard                 # Streamlit UI on http://localhost:8501
 make api                       # FastAPI service on http://localhost:8000  (GET /health)
 ```
+
+> **Cost & privacy:** this project uses **no paid APIs**. Market data comes from
+> `yfinance` (free) and news from public NYT/Economist RSS feeds (free); sentiment
+> is computed by a local lexicon (no external LLM). The only secrets are a local
+> dashboard password and API token you set yourself — nothing is billed or sent to
+> a third party. Services bind to `127.0.0.1` by default, so they are not exposed
+> to your network. See [§6 Security Model](#6-security-model).
 
 Run `make help` to list all available commands. Configuration defaults live in
 `configs/config.yaml` and `configs/models.yaml`; local data/feature caches go in `data/`.
@@ -286,20 +293,37 @@ Fields:
 
 ## 6. Security Model
 
-### 6.1 Authentication
+### 6.0 Cost & data safety (no billing risk)
 
-- API access controlled via bearer token
-- Dashboard protected via password gate
+- **No paid third-party APIs are used.** Market data: `yfinance` (free, no key).
+  News evidence: public NYT/Economist RSS feeds (free, no key). Sentiment: a
+  local lexicon — no external LLM/inference service is called.
+- The only secrets (`ML_EQUITY_API_TOKEN`, `ML_EQUITY_DASHBOARD_PASSWORD`) are
+  **local access controls**; they are never transmitted to any third party and
+  incur no charges.
+- The optional `NEWS_API_KEY` / `MARKET_DATA_API_KEY` slots in `.env.example` are
+  **unused by default** and only relevant if you deliberately swap in a keyed
+  provider.
 
 ---
 
-### 6.2 Deployment Assumptions
+### 6.1 Authentication
 
-This system assumes:
+- API access controlled via bearer token (`Authorization: Bearer <token>`).
+- Dashboard protected via password gate.
+- Tokens compared in constant time (`hmac.compare_digest`).
 
-- Controlled research environment OR private infrastructure deployment
-- HTTPS termination handled externally (reverse proxy recommended)
-- No unauthenticated public exposure without additional security layers
+---
+
+### 6.2 Localhost-first, not exposed by default
+
+- `make dashboard` / `make api` bind to **`127.0.0.1`** (loopback) via
+  `launch.sh`, so the services are reachable only from your own machine — not
+  your LAN or the internet.
+- To intentionally expose on your network, override the bind address
+  (`make dashboard HOST=0.0.0.0`); `launch.sh` warns when you do.
+- For any real deployment, put the service behind an HTTPS reverse proxy and set
+  strong secrets first.
 
 ---
 
@@ -310,9 +334,12 @@ Required environment variables:
 - `ML_EQUITY_API_TOKEN`
 - `ML_EQUITY_DASHBOARD_PASSWORD`
 
-Production behavior:
-- Missing secrets should result in **hard failure**
-- No insecure default credentials permitted in production mode
+Guidance:
+- Run `make secrets` to generate strong random values into a gitignored `.env`
+  (written with `chmod 600`). `launch.sh` auto-loads `.env`.
+- `.env` is gitignored — never commit real secrets.
+- The dashboard and `/health` warn when the insecure default credential
+  (`dev-change-me`) is still in use; replace it before exposing the service.
 
 ---
 
