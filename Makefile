@@ -1,4 +1,4 @@
-.PHONY: help setup test lint format typecheck run backtest report dashboard api precommit clean
+.PHONY: help setup secrets test lint format typecheck run backtest report dashboard api precommit clean
 
 PYTHON ?= python
 START ?= 2022-01-01
@@ -9,6 +9,7 @@ SP500_LIMIT ?= 25
 help:
 	@echo "Available targets:"
 	@echo "  setup      Install runtime + dev dependencies and pre-commit hooks"
+	@echo "  secrets    Generate strong local secrets into .env (gitignored)"
 	@echo "  test       Run the test suite with coverage"
 	@echo "  lint       Run ruff + isort + black checks (no changes)"
 	@echo "  format     Auto-format with isort + black"
@@ -24,6 +25,9 @@ setup:
 	$(PYTHON) -m pip install --upgrade pip
 	$(PYTHON) -m pip install -e ".[dev]"
 	pre-commit install
+
+secrets:
+	./scripts/generate_secrets.sh
 
 test:
 	$(PYTHON) -m pytest --cov=src --cov-report=term-missing
@@ -53,6 +57,8 @@ report:
 		--model $(MODEL) --start $(START) --end $(END) \
 		--pdf-report reports/simulation_report.pdf
 
+# dashboard/api bind to 127.0.0.1 by default (localhost only).
+# Override the bind address with: make dashboard HOST=0.0.0.0
 dashboard:
 	./launch.sh dashboard
 
