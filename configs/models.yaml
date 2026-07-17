@@ -1,0 +1,32 @@
+# Model hyperparameters for reproducible runs.
+# Keys map to src.models.create_model(model_type, **params).
+# random_state / seeds are fixed inside src/models.py for determinism.
+
+ridge:
+  alpha: 1.0
+
+gradient_boosting:
+  n_estimators: 150
+  max_depth: 3
+  learning_rate: 0.05
+
+random_forest:
+  n_estimators: 300
+  max_depth: 8
+
+histgb:
+  max_depth: 6
+  learning_rate: 0.04
+  max_iter: 250
+
+neural_mlp:
+  hidden_layer_sizes: [64, 32]
+  alpha: 0.001
+  max_iter: 500
+
+quantum_inspired:
+  n_components: 512
+  gamma: 1.0
+  alpha: 0.5
+
+advanced_ensemble: {}
