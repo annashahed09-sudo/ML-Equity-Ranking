@@ -5,6 +5,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests: 209 passing](https://img.shields.io/badge/tests-209%20passing%2C%204%20skipped-brightgreen.svg)](tests/)
+[![Release: v1.0.0](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/annashahed09-sudo/ML-Equity-Ranking/releases)
 
 ---
 
@@ -541,4 +543,16 @@ make lint
 
 ---
 
-*QERP v2.0.0 — Built with Python, NumPy, Pandas, Scikit-learn, LightGBM, XGBoost, and Plotly.*
+*ML-Equity-Ranking v1.0.0 — Built with Python, NumPy, Pandas, Scikit-learn, LightGBM, XGBoost, and Plotly.*
+
+## Release Notes (v1.0.0)
+
+- **209 tests passing**, 4 skipped (optional XGBoost/LightGBM depend on OpenMP runtime)
+- 14 modular packages with clean dependency graph
+- 5 academically-grounded portfolio optimizers (MVO, Risk Parity, Min Variance, Black-Litterman, Factor Model)
+- 7 factor families with 25+ signals
+- 12 model types with unified factory interface
+- Production-grade walk-forward validation with purging and embargo
+- Real-time financial news intelligence pipeline
+- Interactive Streamlit dashboard with 12 pages
+- FastAPI REST API with ranking, simulation, and optimization endpoints
