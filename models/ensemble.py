@@ -39,6 +39,8 @@ class StackingEnsemble(BaseModel):
         n_folds: int = 5,
         **kwargs
     ):
+        # Remove 'name' from kwargs if present to avoid duplicate arg error
+        kwargs.pop("name", None)
         super().__init__(name="StackingEnsemble", **kwargs)
         self.base_models = base_models or self._default_base_models()
         self.meta_learner = meta_learner or RidgeModel(alpha=0.5)
@@ -56,9 +58,9 @@ class StackingEnsemble(BaseModel):
     def _fit(self, X: np.ndarray, y: np.ndarray) -> Any:
         from sklearn.model_selection import KFold
         
-        # Train base models
+        # Train base models and store fitted models
         for model in self.base_models:
-            model._fit(X, y)
+            model._model = model._fit(X, y)
         
         # Generate meta-features
         if self.use_cv_predictions:
@@ -67,7 +69,7 @@ class StackingEnsemble(BaseModel):
             for i, model in enumerate(self.base_models):
                 for train_idx, val_idx in kf.split(X):
                     model_copy = model.__class__(**model._get_params())
-                    model_copy._fit(X[train_idx], y[train_idx])
+                    model_copy._model = model_copy._fit(X[train_idx], y[train_idx])
                     meta_features[val_idx, i] = model_copy._predict(X[val_idx])
         else:
             meta_features = np.column_stack([
@@ -76,7 +78,7 @@ class StackingEnsemble(BaseModel):
         
         # Train meta-learner
         meta_scaled = self._scaler.fit_transform(meta_features)
-        self.meta_learner._fit(meta_scaled, y)
+        self.meta_learner._model = self.meta_learner._fit(meta_scaled, y)
         
         return self.meta_learner._model
     
@@ -105,6 +107,8 @@ class VotingEnsemble(BaseModel):
         weights: Optional[List[float]] = None,
         **kwargs
     ):
+        # Remove 'name' from kwargs if present to avoid duplicate arg error
+        kwargs.pop("name", None)
         super().__init__(name="VotingEnsemble", **kwargs)
         self.base_models = base_models or self._default_base_models()
         self._weights = weights
@@ -117,7 +121,7 @@ class VotingEnsemble(BaseModel):
     
     def _fit(self, X: np.ndarray, y: np.ndarray) -> Any:
         for model in self.base_models:
-            model._fit(X, y)
+            model._model = model._fit(X, y)
         return None
     
     def _predict(self, X: np.ndarray) -> np.ndarray:

@@ -1,9 +1,8 @@
 from pathlib import Path
 
+import pytest
+
 from src.news import build_evidence_narrative, filter_geopolitical_evidence, NewsEvidence
-from src.reporting import generate_pdf_report
-from tests.test_sp500 import _prepared_data
-from src.sp500 import run_sp500_simulation
 
 
 def test_news_evidence_filter_and_narrative():
@@ -19,6 +18,11 @@ def test_news_evidence_filter_and_narrative():
 
 
 def test_generate_pdf_report(tmp_path: Path):
+    pytest.importorskip("matplotlib", reason="matplotlib not installed")
+    from src.reporting import generate_pdf_report
+    from src.sp500 import run_sp500_simulation
+    from tests.test_sp500 import _prepared_data
+    
     result = run_sp500_simulation(
         start_date="2022-01-01",
         end_date="2022-06-01",

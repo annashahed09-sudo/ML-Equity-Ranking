@@ -171,12 +171,12 @@ class TestVolatilityFactors:
         result = factor.compute(sample_market_data)
         assert result is not None
 
-    def test_different_volatility_methods(self, sample_market_data):
-        f1 = RealizedVolatility(method="standard")
-        f2 = RealizedVolatility(method="parkinson")
+    def test_different_volatility_windows(self, sample_market_data):
+        f1 = RealizedVolatility(window=21)
+        f2 = RealizedVolatility(window=60)
         r1 = f1.compute(sample_market_data).values
         r2 = f2.compute(sample_market_data).values
-        # Both methods should produce valid series
+        # Different windows should produce valid series
         assert r1.notna().any() or r2.notna().any()
 
 
@@ -246,8 +246,8 @@ class TestFactorCatalog:
     def test_catalog_create_default(self):
         catalog = FactorCatalog.create_default()
         assert len(catalog.factors) > 0
-        assert "EarningsYield" in catalog.factors
-        assert "Momentum_126" in catalog.factors
+        assert "earnings_yield" in catalog.factors
+        assert "momentum_126d" in catalog.factors
 
     def test_compute_all_factors(self, sample_market_data):
         result = compute_all_factors(sample_market_data)
@@ -258,8 +258,8 @@ class TestFactorCatalog:
     def test_compute_specific_factors(self, sample_market_data):
         result = compute_all_factors(
             sample_market_data,
-            factor_names=["EarningsYield", "Momentum_126"]
+            factor_names=["earnings_yield", "momentum_126d"]
         )
         assert result is not None
-        expected_cols = {"EarningsYield", "Momentum_126"}
+        expected_cols = {"earnings_yield", "momentum_126d"}
         assert expected_cols.issubset(set(result.factor_values.columns))

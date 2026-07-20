@@ -78,16 +78,21 @@ class ResidualMomentum(FactorComputer):
     def compute(self, df: pd.DataFrame, **kwargs) -> FactorResult:
         self._validate_input(df, ["date", "ticker", "close"])
         
+        # Compute panel-wide per-ticker returns and equal-weighted market return
+        ticker_returns = df.groupby("ticker")["close"].transform(lambda x: x.pct_change())
+        market_ret = ticker_returns.groupby(df["date"]).mean()
+        
         def _compute_residual_momentum(group: pd.DataFrame) -> pd.Series:
             returns = group["close"].pct_change()
-            # Use equal-weighted market return as proxy
-            market_ret = returns.mean()
+            # Map market returns to this group's dates
+            mkt = market_ret.loc[group["date"]].values
+            mkt_series = pd.Series(mkt, index=returns.index, name="market_ret")
             # Rolling beta estimation (60-day)
-            rolling_cov = returns.rolling(60).cov(market_ret)
-            rolling_mkt_var = returns.rolling(60).var()  # Simplified proxy
+            rolling_cov = returns.rolling(60).cov(mkt_series)
+            rolling_mkt_var = mkt_series.rolling(60).var()
             beta = rolling_cov / (rolling_mkt_var + 1e-10)
             # Idiosyncratic return
-            residual = returns - beta * market_ret
+            residual = returns - beta * mkt_series
             # Cumulative residual momentum
             residual_mom = residual.rolling(self.window).sum()
             return residual_mom

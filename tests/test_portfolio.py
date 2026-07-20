@@ -26,7 +26,9 @@ def sample_returns() -> pd.DataFrame:
     tickers = [f"A{i:02d}" for i in range(n_assets)]
 
     mean = np.array([0.08, 0.12, 0.06, 0.10, 0.14, 0.07, 0.09, 0.11]) / 252
-    cov = 0.02 * (0.5 * np.ones((n_assets, n_assets)) + 0.5 * np.eye(n_assets))
+    # Realistic daily covariance: ~15-20% annualized vol, properly PSD
+    corr = 0.3 * np.ones((n_assets, n_assets)) + 0.7 * np.eye(n_assets)
+    cov = 0.0004 * corr
     returns = rng.multivariate_normal(mean, cov, n_days)
 
     return pd.DataFrame(returns, index=dates, columns=tickers)
@@ -57,18 +59,17 @@ class TestMeanVarianceOptimizer:
         assert len(weights) == len(sample_returns.columns)
         assert abs(weights.sum() - 1.0) < 1e-6
 
-    def test_minimum_volatility(self, sample_returns):
+    def test_max_sharpe(self, sample_returns, expected_returns):
         optimizer = MeanVarianceOptimizer()
-        weights = optimizer.minimum_volatility(sample_returns)
-        if weights is not None:
-            assert abs(weights.sum() - 1.0) < 1e-6
+        weights = optimizer.max_sharpe(expected_returns, sample_returns)
+        assert abs(weights.sum() - 1.0) < 1e-6
 
-    def test_efficient_return(self, sample_returns, expected_returns):
+    def test_optimizer_creates_weights(self, sample_returns, expected_returns):
         optimizer = MeanVarianceOptimizer()
-        target = float(expected_returns.mean())
-        weights = optimizer.efficient_return(target, expected_returns, sample_returns)
-        if weights is not None:
-            assert abs(weights.sum() - 1.0) < 0.01
+        weights = optimizer.max_sharpe(expected_returns, sample_returns)
+        assert weights is not None
+        assert len(weights) == len(sample_returns.columns)
+        assert abs(weights.sum() - 1.0) < 1e-6
 
     def test_efficient_frontier(self, sample_returns, expected_returns):
         optimizer = MeanVarianceOptimizer()

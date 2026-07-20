@@ -20,11 +20,9 @@ from .ranker import LightGBMRanker, XGBoostRanker
 # Optional tree models (require extra dependencies)
 try:
     from .tree import RandomForestModel, XGBoostModel, LightGBMModel, CatBoostModel
-    HAS_XGB = True
-    HAS_LGBM = True
-    HAS_CATBOOST = True
+    HAS_RF = HAS_XGB = HAS_LGBM = HAS_CATBOOST = True
 except ImportError:
-    HAS_XGB = HAS_LGBM = HAS_CATBOOST = False
+    HAS_RF = HAS_XGB = HAS_LGBM = HAS_CATBOOST = False
 
 try:
     from .neural import NeuralMLPModel
@@ -39,20 +37,25 @@ _MODEL_REGISTRY: Dict[str, type] = {
     "lasso": LassoModel,
     "stacking_ensemble": StackingEnsemble,
     "voting_ensemble": VotingEnsemble,
-    "lgbm_ranker": LightGBMRanker,
-    "xgb_ranker": XGBoostRanker,
 }
 
-_MODEL_REGISTRY["random_forest"] = RandomForestModel
-_MODEL_REGISTRY["rf"] = RandomForestModel
+# Register rankers (always available via sklearn/lightgbm)
+try:
+    from .ranker import LightGBMRanker, XGBoostRanker
+    _MODEL_REGISTRY["lgbm_ranker"] = LightGBMRanker
+    _MODEL_REGISTRY["xgb_ranker"] = XGBoostRanker
+except ImportError:
+    pass
+
+if HAS_RF:
+    _MODEL_REGISTRY["random_forest"] = RandomForestModel
+    _MODEL_REGISTRY["rf"] = RandomForestModel
 
 if HAS_XGB:
     _MODEL_REGISTRY["xgboost"] = XGBoostModel
-    _MODEL_REGISTRY["xgb_ranker"] = XGBoostRanker
 
 if HAS_LGBM:
     _MODEL_REGISTRY["lightgbm"] = LightGBMModel
-    _MODEL_REGISTRY["lgbm_ranker"] = LightGBMRanker
 
 if HAS_CATBOOST:
     _MODEL_REGISTRY["catboost"] = CatBoostModel

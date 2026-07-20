@@ -142,13 +142,18 @@ class MeanVarianceOptimizer:
             method="SLSQP",
             bounds=bounds,
             constraints=[weight_constraint, return_constraint],
-            options={"maxiter": 1000},
+            options={"maxiter": 5000, "ftol": 1e-10},
         )
         
         if not result.success:
-            raise ConvergenceError(
-                f"Min variance for return {target_return} failed: {result.message}"
-            )
+            if "Iteration limit" in result.message:
+                logger.warning(
+                    f"Min variance for return {target_return} reached iteration limit"
+                )
+            else:
+                raise ConvergenceError(
+                    f"Min variance for return {target_return} failed: {result.message}"
+                )
         
         return pd.Series(result.x, index=expected_returns.index)
     

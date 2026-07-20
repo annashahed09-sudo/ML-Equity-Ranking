@@ -37,12 +37,16 @@ def run_walk_forward_pipeline(
     test_size: Optional[int] = None,
     min_train_size: Optional[int] = None,
     model_kwargs: Optional[Dict] = None,
+    already_prepared: bool = False,
 ) -> PipelineResult:
     """Run full walk-forward model training/evaluation pipeline."""
     if model_kwargs is None:
         model_kwargs = {}
 
-    df = _prepare_dataset(raw_df)
+    if already_prepared:
+        df = raw_df.copy()
+    else:
+        df = _prepare_dataset(raw_df)
     feature_cols = get_feature_columns(df)
     if not feature_cols:
         raise ValueError("No feature columns found. Feature engineering failed.")

@@ -37,6 +37,7 @@ class RidgeModel(BaseModel):
         fit_intercept: bool = True,
         **kwargs
     ):
+        kwargs.pop("name", None)
         super().__init__(name="Ridge", **kwargs)
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -85,6 +86,7 @@ class ElasticNetModel(BaseModel):
         max_iter: int = 1000,
         **kwargs
     ):
+        kwargs.pop("name", None)
         super().__init__(name="ElasticNet", **kwargs)
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -140,6 +142,7 @@ class LassoModel(BaseModel):
         max_iter: int = 1000,
         **kwargs
     ):
+        kwargs.pop("name", None)
         super().__init__(name="Lasso", **kwargs)
         self.alpha = alpha
         self.fit_intercept = fit_intercept

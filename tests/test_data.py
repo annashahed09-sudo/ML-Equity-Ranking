@@ -77,8 +77,9 @@ class TestDataQuality:
         assert cleaned["open"].notna().all()
 
     def test_extreme_returns_detected(self, clean_data):
-        # Inject extreme return
-        clean_data.loc[0, "close"] = 200.0
+        # Inject extreme return in the second row of first ticker (row 5)
+        # This ensures pct_change within the ticker group catches it
+        clean_data.loc[5, "close"] = 300.0  # 200% return from 100.5 -> exceeds 0.5 threshold
         checker = DataQualityChecker(extreme_return_threshold=0.5)
         report = checker.check(clean_data)
         assert report.extreme_returns > 0
