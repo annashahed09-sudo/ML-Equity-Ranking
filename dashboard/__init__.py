@@ -1,0 +1,1 @@
+"""Institutional Quantitative Research Dashboard."""

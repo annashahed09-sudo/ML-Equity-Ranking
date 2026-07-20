@@ -1,323 +1,544 @@
-# Cross-Sectional Equity Ranking & Simulation System
-## Institutional Quant Research System Specification
+# Quantitative Equity Research Platform (QERP)
+
+**Institutional-grade cross-sectional equity ranking, portfolio optimization, and risk analysis platform.**
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ---
 
-## 1. System Overview
+## Table of Contents
 
-This system is a modular **quantitative research and signal generation platform** designed for **cross-sectional equity ranking, portfolio simulation, and factor-driven analysis**.
-
-It supports:
-
-- Cross-sectional return prediction (relative ranking, not absolute forecasting)
-- Multi-model ensemble signal generation
-- Walk-forward backtesting and validation
-- NLP-enhanced sentiment integration
-- Optional GPU-accelerated numerical execution
-- Research-grade simulation of long/short portfolios
-
-The system is explicitly designed for **research and alpha signal exploration**, not execution or live trading.
-
----
-
-## 2. System Objectives
-
-### Primary Objectives
-
-- Generate statistically robust **cross-sectional equity rankings**
-- Evaluate predictive signal quality using **time-series aware validation**
-- Support reproducible research pipelines for factor modeling
-- Enable modular experimentation across ML, NLP, and statistical models
-
-### Non-Objectives
-
-- Direct trade execution or brokerage integration
-- Guaranteed return prediction
-- Real-time low-latency trading systems
-- Regulatory-compliant advisory output
+1. [Overview](#1-overview)
+2. [Architecture](#2-architecture)
+3. [Quick Start](#3-quick-start)
+4. [Modules](#4-modules)
+   - [Configuration](#41-configuration)
+   - [Core Types & Utilities](#42-core-types--utilities)
+   - [Factor Engine](#43-factor-engine)
+   - [Model Layer](#44-model-layer)
+   - [Validation Framework](#45-validation-framework)
+   - [Risk Model](#46-risk-model)
+   - [Portfolio Optimization](#47-portfolio-optimization)
+   - [Signal Processing](#48-signal-processing)
+   - [NLP & News Intelligence](#49-nlp--news-intelligence)
+   - [Explainability](#410-explainability)
+   - [Research Pipeline](#411-research-pipeline)
+   - [API Server](#412-api-server)
+   - [Dashboard](#413-dashboard)
+5. [Mathematical Foundations](#5-mathematical-foundations)
+6. [Research Methodology](#6-research-methodology)
+7. [Testing](#7-testing)
+8. [Contributing](#8-contributing)
+9. [License & Disclaimer](#9-license--disclaimer)
 
 ---
 
-## 3. System Architecture
+## 1. Overview
 
-### 3.1 High-Level Components
+QERP is a modular, institutional-grade quantitative equity research platform designed for **cross-sectional return prediction, factor-driven analysis, portfolio optimization, and risk management**.
+
+### Core Capabilities
+
+- **Cross-sectional ranking** of equities using multi-model ensembles
+- **Academically grounded factor models** across 7 families: value, momentum, quality, volatility, liquidity, growth, profitability
+- **Institutional portfolio optimization**: Mean-Variance, Risk Parity, Black-Litterman, Factor Model
+- **Comprehensive risk analytics**: VaR, CVaR, factor decomposition, shrinkage covariance estimation
+- **Walk-forward validation** with purging and embargo windows (Lopez de Prado methodology)
+- **Interactive research dashboard** with 12 professional pages
+- **REST API** for programmatic access
+
+### Design Principles
+
+- **Mathematical rigor**: Every estimator is academically grounded (Ledoit-Wolf, CAPM, Black-Litterman)
+- **Type safety**: Full Pydantic configuration, typed data classes, comprehensive error hierarchy
+- **Modularity**: 14 independently testable modules with clear boundaries
+- **Reproducibility**: Seeded random operations, configuration-driven execution, experiment tracking
+- **Production readiness**: Caching, retry logic, parallel processing, comprehensive logging
+
+---
+
+## 2. Architecture
 
 ```
-Data Layer → Feature Engineering → Model Layer → Signal Aggregation → Portfolio Simulation → Reporting Layer
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           ENTRY POINTS                                 │
+│              main.py · api/app.py · dashboard/app.py                    │
+└──────────────────────┬──────────────────────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────────────────────┐
+│                        RESEARCH PIPELINE                                │
+│                research/pipeline.py · research/run.py                   │
+└──────┬─────────┬──────────┬──────────┬──────────┬──────────┬───────────┘
+       │         │          │          │          │          │
+┌──────▼──┐ ┌───▼────┐ ┌──▼─────┐ ┌──▼─────┐ ┌──▼──────┐ ┌──▼───────┐
+│  DATA   │ │FACTORS │ │ MODELS │ │VALIDATN│ │ SIGNAL  │ │ PORTFOLIO│
+│ loader  │ │ value  │ │ linear │ │wf, pur │ │ comb    │ │ MVO      │
+│ quality │ │ momen  │ │ tree   │ │ metrics│ │ norm    │ │ RP       │
+│ cache   │ │ vol    │ │ ranker │ │ backtst│ │ orthog  │ │ BL       │
+│         │ │ liq    │ │ neural │ │        │ │         │ │ factor   │
+└────────┘ │ growth  │ │ tuning │ └────────┘ └─────────┘ │ cons     │
+           │ prof    │ └────────┘                        └──────────┘
+           └─────────┘
+        ┌──────┐ ┌──────┐ ┌──────────┐ ┌──────────┐ ┌───────────┐
+        │ RISK │ │ NLP  │ │  NEWS    │ │EXPLAIN   │ │  CONFIG   │
+        │ cov  │ │sentim│ │ ingest   │ │SHAP      │ │ pydantic  │
+        │ fa   │ │lex   │ │ events   │ │PDP, ICE  │ │ settings  │
+        │ VaR  │ └──────┘ └──────────┘ │ importnc  │ │ .env      │
+        └──────┘                       └──────────┘ └───────────┘
+```
+
+### Module Dependency Graph
+
+```
+config  ←  core  ←  data
+                        ↓
+        ┌────────── factors ──────────┐
+        ↓                              ↓
+    signal ←──── models ────→ validation
+        ↓         ↓               ↓
+    portfolio ← risk ────→ research.pipeline
+        ↓         ↓               ↓
+    api/app  ←───┴────── dashboard/app
 ```
 
 ---
 
-### 3.2 Core Modules
+## 3. Quick Start
 
-#### (A) Data Ingestion Layer
+### Installation
 
-Sources:
-- Yahoo Finance (`yfinance`)
-- Optional S&P 500 constituent universe (dynamic or fallback snapshot)
-- External news feeds (NYT, Economist RSS metadata only)
+```bash
+# Clone and install
+git clone <repository-url>
+cd ML-Equity-Ranking
 
-Responsibilities:
-- OHLCV retrieval
-- Universe construction
-- Data normalization and alignment
-- Missing data handling
+# Core dependencies
+pip install -r requirements.txt
 
----
+# Optional: ML models
+pip install lightgbm xgboost catboost
 
-#### (B) Feature Engineering Layer
+# Optional: NLP
+pip install transformers
 
-Feature categories:
-
-- Price-based features (returns, volatility, momentum)
-- Cross-sectional normalization (z-scores, ranks)
-- Rolling statistical features
-- Optional sentiment features from NLP pipeline
-
-Output:
-- Model-ready feature tensor indexed by (time, asset)
-
----
-
-#### (C) Model Layer
-
-Ensemble architecture:
-
-1. Linear Models
-   - Ridge regression (baseline factor model)
-
-2. Tree-Based Models
-   - Random Forest
-   - Gradient Boosting
-   - Histogram-based Gradient Boosting
-
-3. Neural Models
-   - Multi-layer perceptron regressor
-
-4. Kernel Approximation Models
-   - Random Fourier Features (RFF) + Ridge regression
-
-5. Ensemble Aggregation
-   - Stacked meta-model (`advanced_ensemble`)
-
-All models operate under **cross-sectional regression objective**:
-\[
-y_{i,t} = f(X_{i,t}) + \epsilon
-\]
-
-where target is relative return or forward-ranked performance.
-
----
-
-#### (D) Acceleration Layer
-
-Compute backends:
-
-- CPU: NumPy (baseline)
-- GPU (optional):
-  - CuPy for array operations
-  - CUDA-enabled acceleration (environment-dependent)
-- JIT:
-  - Numba for vectorized numerical routines
-
-Selection is runtime adaptive based on hardware availability.
-
----
-
-#### (E) NLP & Sentiment Layer
-
-Submodules:
-
-- TF-IDF vectorization
-- Logistic regression sentiment classifier
-- Lexicon fallback sentiment scoring
-- Text summarization (lightweight extractive methods)
-
-Outputs:
-- Sentiment score per asset
-- Aggregated thematic signals
-- Augmented feature vectors for model layer
-
-Constraint:
-- No full-text proprietary data redistribution (metadata only)
-
----
-
-#### (F) Signal Aggregation Layer
-
-Combines outputs from:
-
-- ML ranking models
-- Sentiment signals
-- Cross-model ensemble weighting
-
-Produces:
-- Cross-sectional score per asset per time step
-- Normalized rank ordering
-
----
-
-#### (G) Portfolio Simulation Engine
-
-Backtesting methodology:
-
-- Walk-forward validation (strict temporal separation)
-- Long/short portfolio construction
-- Transaction cost modeling
-- Turnover constraints
-- Rebalancing simulation
-
-Metrics:
-
-- Information Coefficient (IC)
-- Rank correlation stability
-- Portfolio Sharpe (simulation-based)
-- Drawdown statistics
-- Turnover rates
-
----
-
-#### (H) Reporting Layer
-
-Outputs:
-
-- Structured performance reports
-- Ranked asset lists
-- Model comparison summaries
-- Optional PDF export for research documentation
-
----
-
-## 4. Interfaces
-
-### 4.1 API Service (FastAPI)
-
-Purpose:
-Programmatic access to ranking, simulation, and analytics.
-
-Endpoints:
-
-- `/sp500/simulate`
-- `/predict_from_tickers`
-- `/health`
-
-Authentication:
-- Bearer token required (`API_TOKEN`)
-
----
-
-### 4.2 Research Dashboard (Streamlit)
-
-Purpose:
-Interactive exploration of rankings and simulation outputs.
-
-Characteristics:
-- Password-protected
-- Non-production interface
-- Intended for internal research use only
-
----
-
-### 4.3 CLI Interface
-
-Supports:
-
-- batch ticker ranking
-- full universe simulation
-- offline/backtest execution
-- report generation
-
-Designed for reproducible research workflows.
-
----
-
-## 5. Data Model
-
-### Primary Entity
-
-```
-Asset-Time Feature Tensor
-(index: time, asset)
+# Optional: Dashboard
+pip install streamlit plotly
 ```
 
-Fields:
+### Usage
 
-- OHLCV features
-- engineered signals
-- sentiment scores (optional)
-- target variable (forward return or rank)
+```bash
+# Run research pipeline with synthetic data
+python main.py research
 
----
+# Launch interactive dashboard
+python main.py dashboard
 
-## 6. Security Model
+# Start API server
+python main.py api
 
-### 6.1 Authentication
+# Run all tests
+python main.py test
+```
 
-- API access controlled via bearer token
-- Dashboard protected via password gate
+### Makefile Targets
 
----
-
-### 6.2 Deployment Assumptions
-
-This system assumes:
-
-- Controlled research environment OR private infrastructure deployment
-- HTTPS termination handled externally (reverse proxy recommended)
-- No unauthenticated public exposure without additional security layers
-
----
-
-### 6.3 Secret Management
-
-Required environment variables:
-
-- `ML_EQUITY_API_TOKEN`
-- `ML_EQUITY_DASHBOARD_PASSWORD`
-
-Production behavior:
-- Missing secrets should result in **hard failure**
-- No insecure default credentials permitted in production mode
+| Command | Description |
+|---------|-------------|
+| `make install` | Install core dependencies |
+| `make test` | Run test suite |
+| `make test-cov` | Run tests with coverage |
+| `make lint` | Lint all modules |
+| `make api` | Start FastAPI server |
+| `make dashboard` | Start Streamlit dashboard |
+| `make research` | Run research pipeline |
 
 ---
 
-## 7. Performance Considerations
+## 4. Modules
 
-- Vectorized computation preferred (NumPy / CuPy)
-- Avoid Python-level loops in feature computation
-- GPU acceleration optional and non-essential
-- Walk-forward backtesting is computationally dominant workload
+### 4.1 Configuration (`config/`)
+
+Pydantic-v2 settings with environment variable support, validation, and sensible defaults.
+
+```python
+from config import settings
+
+# Access any setting
+settings.MODEL_BACKEND        # "cpu", "gpu", or "auto"
+settings.VALIDATION_STRATEGY  # Walk-forward strategy
+settings.PORTFOLIO_OBJECTIVE  # Optimization objective
+```
+
+**Key settings categories:**
+- Environment & paths
+- Data source configuration
+- Factor parameters (winsorization, neutralization)
+- Model hyperparameters (LightGBM, XGBoost, CatBoost)
+- Validation strategy (walk-forward, purged CV, nested CV)
+- Portfolio constraints (max weight, sector limits)
+- Risk parameters (confidence level, covariance method)
+- API and security configuration
+
+### 4.2 Core Types & Utilities (`core/`)
+
+Domain types, exception hierarchy, and mathematical utilities.
+
+**Types**: `AssetReturn`, `FactorExposure`, `PortfolioWeight`, `RankedAsset`, `BacktestResult`, `ExperimentResult`
+
+**Exceptions**: `QuantsError` → `DataError`, `ModelError`, `PortfolioError`, `RiskError`, `ConvergenceError`, etc.
+
+**Mathematical Utilities**:
+```python
+from core.utils import (
+    winsorize_series,       # Clip extreme values at quantiles
+    zscore_normalize,       # Standard/robust/Gaussian rank normalization
+    cross_sectional_zscore, # Per-date cross-sectional normalization
+    stable_softmax,         # Numerically stable softmax
+    entropy, kl_divergence, # Information-theoretic measures
+    jensen_shannon_distance, # Symmetric distribution divergence
+)
+```
+
+### 4.3 Factor Engine (`factors/`)
+
+**7 academically-grounded factor families** with consistent interface:
+
+#### Value
+- `EarningsYield` — Earnings / Price
+- `BookToMarket` — Book Value / Market Cap
+- `FreeCashFlowYield` — FCF / Enterprise Value
+- `CompositeValue` — Weighted combination
+
+#### Momentum
+- `TimeSeriesMomentum` — Price change over window (configurable: 63, 126, 252 days)
+- `ResidualMomentum` — Momentum orthogonalized to market
+- `VolatilityAdjustedMomentum` — Momentum scaled by inverse volatility
+- `High52Week` — Distance from 52-week high
+- `CompositeMomentum` — Multi-signal aggregation
+
+#### Quality
+- `ReturnOnEquity` — Net Income / Equity
+- `GrossProfitability` — Gross Profit / Assets
+- `PiotroskiFScore` — 9-point fundamental score
+- `CompositeQuality` — Multi-factor quality score
+
+#### Volatility
+- `RealizedVolatility` — Standard deviation or Parkinson estimator
+- `DownsideDeviation` — Negative return deviation only
+- `MarketBeta` — CAPM market sensitivity
+- `IdiosyncraticVolatility` — Residual vol from market model
+
+#### Liquidity
+- `AverageDailyVolume` — Rolling average trading volume
+- `AmihudIlliquidity` — Price impact per dollar volume
+
+#### Growth
+- `RevenueGrowth` — YoY revenue growth rate
+- `EPSGrowth` — YoY earnings per share growth
+- `CompositeGrowth` — Multi-signal growth score
+
+#### Profitability
+- `GrossMargin` — Gross Profit / Revenue
+- `OperatingMargin` — Operating Income / Revenue
+- `NetMargin` — Net Income / Revenue
+- `CompositeProfitability` — Multi-signal profitability score
+
+### 4.4 Model Layer (`models/`)
+
+**12 model types** with consistent `fit` / `predict` interface:
+
+| Model | Type | Best For |
+|-------|------|----------|
+| Ridge | Linear | Baseline, stable signals |
+| Lasso | Linear | Sparse feature selection |
+| Elastic Net | Linear | Balanced regularization |
+| Random Forest | Tree | Non-linear patterns, robustness |
+| XGBoost | Tree | Gradient boosting, ranking |
+| LightGBM | Tree | Large datasets, efficiency |
+| CatBoost | Tree | Categorical features |
+| Neural MLP | Neural | Complex non-linear relationships |
+| LightGBM Ranker | Learning-to-Rank | Cross-sectional ranking |
+| XGBoost Ranker | Learning-to-Rank | Cross-sectional ranking |
+| Stacking Ensemble | Meta | Heterogeneous model aggregation |
+| Voting Ensemble | Meta | Democratic model combination |
+
+**Model Factory**: `ModelFactory.create("ridge")` — registry-based instantiation.
+
+**Hyperparameter Tuning**:
+- `BayesianOptimizer` — Tree-structured Parzen Estimator (Optuna-style)
+- `GridOptimizer` — Exhaustive grid search
+
+### 4.5 Validation Framework (`validation/`)
+
+**Walk-Forward Validation** (standard in quantitative finance):
+- Strict temporal train/test separation
+- Configurable training size, test size, purging, and embargo
+- Multiple folds with expanding or sliding window
+
+**Metrics** (15+ performance measures):
+- Information Coefficient (Spearman rank correlation)
+- Rank IC time series
+- Quantile returns (decile spread)
+- Long-short portfolio returns
+- Sharpe, Sortino, Calmar ratios
+- Maximum drawdown and drawdown duration
+- Win rate, profit factor, turnover
+- Information ratio
+
+```python
+from validation.metrics import (
+    compute_information_coefficient,  # IC: Spearman rank correlation
+    compute_long_short_returns,        # Top/bottom quantile spread
+    compute_ic_summary,                # Comprehensive IC statistics
+)
+```
+
+### 4.6 Risk Model (`risk/`)
+
+**Covariance Estimation**:
+- `SampleCovariance` — Standard unbiased estimator
+- `LedoitWolfCovariance` — Optimal shrinkage (Ledoit & Wolf, 2004)
+- `EWMACovariance` — Exponentially weighted (RiskMetrics)
+
+**Factor Risk Model**:
+- `FactorRiskModel` — `Σ = B·F·B' + D`
+- Factor exposure estimation via OLS
+- Risk decomposition into systematic + idiosyncratic
+
+**Risk Metrics**:
+- Value at Risk (Historical, Parametric, Monte Carlo)
+- Conditional VaR (Expected Shortfall)
+- Tracking error (active risk)
+- CAPM Beta and Jensen's Alpha
+- Active risk from covariance
+
+### 4.7 Portfolio Optimization (`portfolio/`)
+
+**Institutional allocation techniques**:
+
+| Optimizer | Method | Reference |
+|-----------|--------|-----------|
+| `MeanVarianceOptimizer` | Max Sharpe, Min Vol, Efficient Frontier | Markowitz (1952) |
+| `RiskParityOptimizer` | Equal Risk Contribution | Maillard, Roncalli, Telletche (2010) |
+| `MinimumVarianceOptimizer` | Global Minimum Variance | Haugen & Baker (1991) |
+| `BlackLittermanOptimizer` | Prior + Views → Posterior | Black & Litterman (1992) |
+| `FactorModelOptimizer` | Factor-based Covariance + Exposure Targeting | Ross (1976) |
+
+**Constraints Engine** (`PortfolioConstraints`):
+- Long-only / Long-short
+- Max position weight
+- Sector exposure limits
+- Turnover penalties
+
+### 4.8 Signal Processing (`signal/`)
+
+**Combination Methods**:
+- Equal-weighted, rank-weighted, IC-weighted
+- Optimal signal combination (constrained optimization)
+
+**Normalization**:
+- Z-score, robust (MAD), Gaussian rank transform
+- Sigmoid, min-max, winsorization
+
+**Orthogonalization**:
+- Gram-Schmidt sequential orthogonalization
+- PCA-based decorrelation
+- Residual orthogonalization (regression-based)
+
+### 4.9 NLP & News Intelligence (`nlp/`, `news/`)
+
+- `FinancialSentimentAnalyzer` — FinBERT (transformer), Lexicon, Hybrid
+- `LexiconSentiment` — Domain-specific financial dictionary
+- `NewsIngestor` — RSS feed ingestion with entity extraction
+- `EventDetector` — Earnings, M&A, guidance changes, regulatory events
+
+### 4.10 Explainability (`explainability/`)
+
+- `PermutationImportance` — Feature importance with statistical significance
+- `PartialDependence` — Marginal effect of features on predictions
+- `IndividualConditionalExpectation` — Per-instance feature effects
+
+### 4.11 Research Pipeline (`research/`)
+
+End-to-end pipeline orchestrator:
+
+```
+Raw Data → Factor Computation → Feature Engineering → 
+Walk-Forward Validation → Model Training → Prediction → 
+Portfolio Backtest → Performance Reporting
+```
+
+```python
+from research.pipeline import ResearchPipeline
+
+pipeline = ResearchPipeline()
+result = pipeline.run(
+    raw_df=market_data,
+    model_type="lightgbm",
+    n_splits=5,
+)
+print(f"Mean IC: {result.ic_series.mean():.4f}")
+print(f"Sharpe: {result.portfolio_summary['sharpe']:.2f}")
+```
+
+### 4.12 API Server (`api/`)
+
+FastAPI application with endpoints:
+- `POST /api/v1/rank` — Rank tickers using cross-sectional model
+- `POST /api/v1/simulate/sp500` — Full S&P 500 walk-forward simulation
+- `POST /api/v1/optimize/portfolio` — Portfolio optimization
+- `GET /api/v1/factors` — List available factors
+- `GET /health` — Health check
+
+### 4.13 Dashboard (`dashboard/`)
+
+Premium Streamlit dashboard with 12 professional pages:
+
+| Page | Description |
+|------|-------------|
+| Executive Dashboard | High-level KPIs, market overview, factor performance |
+| Research Workspace | Pipeline configuration and execution |
+| Factor Explorer | Factor returns, correlations, rolling metrics |
+| Feature Importance | SHAP, permutation importance, PDP, ICE |
+| Portfolio Construction | MVO, risk parity, Black-Litterman, efficient frontier |
+| Risk Analytics | VaR/CVaR, drawdown, factor decomposition |
+| Backtest Explorer | Walk-forward attribution, trade analysis |
+| News Intelligence | Sentiment analysis, event detection |
+| Market Heatmap | Sector treemap, factor exposure map |
+| Correlation Matrix | Asset/factor correlations, clustering |
+| Model Comparison | Leaderboard, CV performance, diagnostics |
+| Experiment Tracking | Run history, parameter comparison |
 
 ---
 
-## 8. Limitations
+## 5. Mathematical Foundations
 
-- Model outputs are statistical estimations, not predictions
-- Non-stationarity of financial markets limits predictive stability
-- Performance is highly sensitive to:
-  - feature selection
-  - training window
-  - regime shifts
-- NLP signals are auxiliary and noisy
+### Covariance Estimation
+
+**Ledoit-Wolf Shrinkage** (Ledoit & Wolf, 2004):
+```
+Σ_shrunk = (1 - δ) * Σ_sample + δ * Σ_target
+```
+where δ is the optimal shrinkage intensity minimizing expected Frobenius loss.
+
+**EWMA Covariance** (RiskMetrics):
+```
+Σ_t = λ * Σ_{t-1} + (1 - λ) * r_t * r_t'
+```
+where λ = 0.94 for daily data (JP Morgan RiskMetrics).
+
+### Black-Litterman Model
+
+**Prior**: Π = λ * Σ * w_market (reverse optimization)
+
+**Posterior**:
+```
+μ_post = [(τΣ)^{-1} + P'Ω^{-1}P]^{-1} * [(τΣ)^{-1}Π + P'Ω^{-1}Q]
+Σ_post = Σ + [(τΣ)^{-1} + P'Ω^{-1}P]^{-1}
+```
+
+### Risk Decomposition
+
+**Factor Model**: R_t = B·f_t + ε_t
+
+**Portfolio Risk**: σ²_p = w'·B·F·B'·w + w'·D·w
+
+### Information Coefficient
+
+**Spearman Rank IC**: ρ = 1 - (6 * Σ d²_i) / (n * (n² - 1))
+
+### Walk-Forward Validation
+
+- Train on expanding window: [1, t_i]
+- Test on fixed window: [t_i + embargo, t_i + test_size]
+- Purge: Remove [t_i - purge, t_i] to prevent leakage
+- Metrics averaged across folds with standard deviation
 
 ---
 
-## 9. Extensibility
+## 6. Research Methodology
 
-System is designed to support:
+### Pre-processing
 
-- Alternative asset classes (crypto, FX, commodities)
-- Alternative factor models (Fama-French extensions)
-- Reinforcement learning portfolio policies
-- Alternative data integration (news APIs, filings, macro signals)
+1. **Winsorization**: Extreme values clipped at 1st/99th percentile
+2. **Cross-sectional normalization**: Per-date z-scores across universe
+3. **Sector neutralization**: Returns orthogonalized to sector membership
+4. **Missing data**: Gap filling (forward fill) with minimum observation thresholds
+
+### Validation Strategy
+
+- **Primary**: Walk-forward with 5 splits, 252-day test windows, 5-day purging
+- **Secondary**: Purged cross-validation for hyperparameter tuning
+- **Benchmark**: Equal-weighted portfolio of universe
+
+### Performance Evaluation
+
+- **Primary metric**: Information Coefficient (Spearman rank correlation)
+- **Secondary**: Long-short portfolio Sharpe ratio (20/20 quantile spread)
+- **Robustness**: IC standard deviation, IC Sharpe ratio, percentage positive
+- **Statistical significance**: t-stat of mean IC > 2.0 threshold
 
 ---
 
-## 10. Compliance Statement
+## 7. Testing
 
-This system is intended solely for:
-- academic research
-- quantitative experimentation
-- simulation-based analysis
+```bash
+# Run all tests
+pytest tests/ -v
 
-It does not constitute financial advice, investment recommendations, or trading signals for execution.
+# With coverage
+pytest tests/ --cov=. --cov-report=term --cov-report=html
+
+# Run specific module
+pytest tests/test_factors.py -v
+pytest tests/test_risk.py -v
+
+# Run with markers
+pytest -m "not slow"  # Skip slow tests
+```
+
+**Test coverage by module**: config, core, data, factors, models, validation, risk, portfolio, signal, nlp, news, explainability, research, api
+
+---
+
+## 8. Contributing
+
+### Development Setup
+
+```bash
+# Install dev dependencies
+pip install -r requirements.txt
+pip install pytest pytest-cov black isort flake8 pre-commit
+
+# Install pre-commit hooks
+pre-commit install
+
+# Format code
+make format
+
+# Run linters
+make lint
+```
+
+### Guidelines
+
+- All new code must include type annotations
+- All modules must have corresponding test files
+- Mathematical implementations must cite references
+- Configuration must use Pydantic validation
+- Functions must have NumPy-style docstrings
+
+---
+
+## 9. License & Disclaimer
+
+**License**: MIT License
+
+**Disclaimer**: This software is intended solely for academic research, quantitative experimentation, and simulation-based analysis. It does not constitute financial advice, investment recommendations, or trading signals for execution. Past performance and simulated results are not indicative of future results.
+
+---
+
+*QERP v2.0.0 — Built with Python, NumPy, Pandas, Scikit-learn, LightGBM, XGBoost, and Plotly.*

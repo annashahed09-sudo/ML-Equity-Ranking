@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml-equity-ranking"
+version = "2.0.0"
+description = "Institutional-grade quantitative equity research platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Quantitative Research Team"},
+]
+
+dependencies = [
+    "pandas>=1.5.0",
+    "numpy>=1.23.0",
+    "scipy>=1.9.0",
+    "scikit-learn>=1.2.0",
+    "yfinance>=0.2.28",
+    "matplotlib>=3.6.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.22.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.2.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "pre-commit>=3.0.0",
+]
+ml = [
+    "lightgbm>=4.0.0",
+    "xgboost>=2.0.0",
+    "catboost>=1.2.0",
+]
+nlp = [
+    "transformers>=4.35.0",
+]
+explain = [
+    "shap>=0.42.0",
+]
+dashboard = [
+    "streamlit>=1.36.0",
+    "plotly>=5.22.0",
+]
+all = [
+    "ml-equity-ranking[dev,ml,nlp,explain,dashboard]",
+]
+
+[tool.setuptools.packages.find]
+include = ["config", "core", "data", "factors", "models", "validation", "risk", "portfolio", "signal_processing", "nlp", "news", "explainability", "research", "api", "dashboard"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["config", "core", "data", "factors", "models", "validation", "risk", "portfolio", "signal_processing", "nlp", "news", "explainability", "research", "api"]
+omit = ["*/tests/*", "*/__init__.py"]
