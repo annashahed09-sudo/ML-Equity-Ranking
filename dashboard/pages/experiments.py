@@ -68,8 +68,8 @@ def render() -> None:
         return ""
 
     st.dataframe(
-        experiments_df.style.applymap(color_status, subset=["Status"]),
-        use_container_width=True, hide_index=True,
+        experiments_df.style.map(color_status, subset=["Status"]),
+        width='stretch', hide_index=True,
     )
 
     # ── Recent Results Summary ────────────────────────────────────────────
@@ -163,7 +163,7 @@ def render() -> None:
 
     if selected:
         compare_df = experiments_df[experiments_df["Run ID"].isin(selected)]
-        st.dataframe(compare_df, use_container_width=True, hide_index=True)
+        st.dataframe(compare_df, width='stretch', hide_index=True)
 
         # Radar chart for comparison
         if len(selected) >= 2:

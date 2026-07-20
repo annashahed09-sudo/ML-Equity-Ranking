@@ -14,7 +14,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import (
-    metric_card,
     plotly_figure,
     render_kpi_row,
     render_section_header,
@@ -156,8 +155,8 @@ def render() -> None:
                 fold_metrics.style.format({
                     "Mean IC": "{:.4f}", "Rank IC": "{:.4f}", "Sharpe": "{:.2f}",
                 }),
-                use_container_width=True, hide_index=True,
-            )
+            width='stretch', hide_index=True,
+        )
 
         with col2:
             render_section_header("Latest Rankings", "Current model predictions")
@@ -165,13 +164,13 @@ def render() -> None:
                 predictions.style.format({
                     "Score": "{:.3f}",
                     "Confidence": "{:.2%}",
-                }).applymap(
+                }).map(
                     lambda v: "color: #3fb950" if isinstance(v, str) and v == "Long"
                     else "color: #f85149" if isinstance(v, str) and v == "Short"
                     else "",
                     subset=["Direction"],
                 ),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
         # ── Factor Importance ─────────────────────────────────────────────

@@ -61,12 +61,12 @@ def render() -> None:
             "Mean IC": "{:.4f}", "Std IC": "{:.4f}",
             "IC Sharpe": "{:.2f}", "Sharpe (Portfolio)": "{:.2f}",
             "Train Time (s)": "{:.0f}",
-        }).applymap(
+        }).map(
             lambda v: "color: #3fb950" if isinstance(v, (int, float)) and (v > 1.5 if isinstance(v, float) else v <= 3)
             else "",
             subset=["Rank"],
         ),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
     # ── Performance Comparison ────────────────────────────────────────────
@@ -202,4 +202,4 @@ def render() -> None:
         "Regularization": ["L2=1.0", "L1=0.5, L2=0.5", "L2=1.0", "CV-optimized", "MSE", "Adam"],
         "Early Stopping": ["50 rounds", "50 rounds", "100 rounds", "—", "—", "10 epochs"],
     })
-    st.dataframe(configs, use_container_width=True, hide_index=True)
+    st.dataframe(configs, width='stretch', hide_index=True)

@@ -165,13 +165,13 @@ def render() -> None:
         st.markdown("#### Top 5 Performers")
         st.dataframe(
             top5.style.format({"Return": "{:.2%}"})
-            .applymap(lambda _: "color: #3fb950", subset=["Return"]),
-            use_container_width=True, hide_index=True,
+            .map(lambda _: "color: #3fb950", subset=["Return"]),
+            width='stretch', hide_index=True,
         )
     with col2:
         st.markdown("#### Bottom 5 Performers")
         st.dataframe(
             bottom5.style.format({"Return": "{:.2%}"})
-            .applymap(lambda _: "color: #f85149", subset=["Return"]),
-            use_container_width=True, hide_index=True,
+            .map(lambda _: "color: #f85149", subset=["Return"]),
+            width='stretch', hide_index=True,
         )

@@ -131,13 +131,13 @@ def render() -> None:
             "Sentiment": "{:.0%}",
             "Confidence": "{:.0%}",
             "Impact Score": "{:.1f}/10",
-        }).applymap(
+        }).map(
             lambda v: "color: #3fb950" if isinstance(v, (int, float)) and v > 0.5
             else "color: #f85149" if isinstance(v, (int, float)) and v < 0
             else "",
             subset=["Sentiment"],
         ),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
     # ── Entity Extraction ────────────────────────────────────────────────
@@ -152,7 +152,7 @@ def render() -> None:
         "Sectors": ["Technology", "Macro/Policy", "Finance",
                      "Consumer", "Technology", "Energy"],
     })
-    st.dataframe(entities, use_container_width=True, hide_index=True)
+    st.dataframe(entities, width='stretch', hide_index=True)
 
     # ── News Volume ──────────────────────────────────────────────────────
     render_section_header("News Volume", "Article count by category over time")

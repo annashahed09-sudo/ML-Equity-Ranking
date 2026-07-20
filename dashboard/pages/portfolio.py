@@ -11,7 +11,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import (
-    metric_card,
     plotly_figure,
     render_kpi_row,
     render_section_header,

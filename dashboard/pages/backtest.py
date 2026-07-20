@@ -154,13 +154,13 @@ def render() -> None:
                 "Selection Effect": "{:.2f}%",
                 "Interaction": "{:.2f}%",
                 "Total": "{:.2f}%",
-            }).applymap(
+            }).map(
                 lambda v: "color: #3fb950" if isinstance(v, (int, float)) and v > 0
                 else "color: #f85149" if isinstance(v, (int, float)) and v < 0
                 else "",
                 subset=["Total"],
             ),
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
 
     # Monthly returns heatmap
@@ -200,4 +200,4 @@ def render() -> None:
         "Value": [1247, 718, 529, "57.6%", "1.24%", "-0.87%",
                     "2.42", "18.4 days", "12.3%", "9.5"],
     })
-    st.dataframe(trades, use_container_width=True, hide_index=True)
+    st.dataframe(trades, width='stretch', hide_index=True)
